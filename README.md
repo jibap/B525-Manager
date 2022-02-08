@@ -1,7 +1,7 @@
 # B525-SMSManager
 Fonctionne sur Huawei B525s-65a (fonctionne peut-être sur d'autres modèles si API similaires).
 
-**Pour Windows : Notification dès qu'un SMS arrive et UI gestionnaire de SMS (suppression, envoi...)**
+**Pour Windows : Notification dès qu'un SMS arrive et UI gestionnaire de SMS (suppression, envoi...)** \
 **Pour Linux** : le fichier manage_sms.sh est utilisable en terminal (help inclus)
 
 ## Projet
