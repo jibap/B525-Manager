@@ -40,23 +40,25 @@ Si vous utilisez déjà AHK (ou que vous préférez ne pas utiliser un .exe prov
 **ROUTER_IP** : adresse IP du routeur (**192.168.8.1** par défaut)\
 **DEFAULTSMS** : permet de spécifier un numéro de téléphone à utiliser par défaut dans l'interface d'envoi de SMS (option mise en oeuvre puisque dans mon cas, je communique par SMS via ma box 4G, toujours vers le même numéro)
 
-<img src="https://routeur4g.fr/discussions/uploads/editor/tz/j56x2d0tsxvy.png" width="200px"/>
+<img src="https://routeur4g.fr/discussions/uploads/editor/tz/j56x2d0tsxvy.png"/>
 
 Une fois le logiciel en cours d'exécution, une icône s'affiche au niveau de la zone de notification de Windows (à côté de l'horloge). 
 
 ## Usage
 * **Un survol de l'icone** affiche un infobulle récapitulatif (nb de messages non lus, reçus et envoyés)\
-<img src="https://routeur4g.fr/discussions/uploads/editor/pl/cvhervm1yshb.png" width="200px"/> <img src="https://routeur4g.fr/discussions/uploads/editor/hx/grt69n654unr.png" width="200px"/>
+<img src="https://routeur4g.fr/discussions/uploads/editor/pl/cvhervm1yshb.png"/> <img src="https://routeur4g.fr/discussions/uploads/editor/hx/grt69n654unr.png" width="200px"/>
+
 * **Un clic-droit** sur l'icone affiche un menu contextuel permettant de quitter l'appli, actualiser le statut, ou encore afficher l'interface d'envoi de SMS\
-<img src="https://routeur4g.fr/discussions/uploads/editor/fl/9vyzxgu0kjx6.png" width="200px"/>
-* **Un double clic** sur l'icone affiche l'interface de gestion des SMS : une liste de tous les SMS présents sur la box
-<img src="https://routeur4g.fr/discussions/uploads/editor/1d/2hoxc4rfc9ij.png" width="500px"/>
+<img src="https://routeur4g.fr/discussions/uploads/editor/fl/9vyzxgu0kjx6.png"/>
+
+* **Un double clic** sur l'icone affiche l'interface de gestion des SMS : une liste de tous les SMS présents sur la box\
+<img src="https://routeur4g.fr/discussions/uploads/editor/1d/2hoxc4rfc9ij.png"/>
 
 ### Comportement
 * L'icone de la marque Huawei est blanche si aucun nouveau message. <img src="noSMS.ico" width="20px"/>
-* L'icone passe au rouge quand une interrogation de la box est en cours. <img src="load.ico" width="20px"/>
+* L'icone passe au rouge quand une interrogation de la box est en cours. <img src="load.ico" width="20px" />
 * L'icone change pour une bulle de citation avec "..." pour indiquer qu'un nouveau message est présent. <img src="more.ico" width="20px"/>
 
 A chaque actualisation (5 minutes par défaut), le logiciel vérifie si de nouveaux SMS sont arrivés, si c'est le cas, une notification Windows apparaîtra avec le contenu des nouveaux messages (très utile pour les code de double authentification e-commerce !)
 
-<img src="https://routeur4g.fr/discussions/uploads/editor/dz/vqvcgxw4wgac.png" width="300px"/>
+<img src="https://routeur4g.fr/discussions/uploads/editor/dz/vqvcgxw4wgac.png" />
