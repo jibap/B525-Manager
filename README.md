@@ -9,7 +9,7 @@ J'ai cherché en vain une petite appli facile à mettre en oeuvre qui permettrai
 Je l'ai donc crée avec AutoHotKey et Bash en partant du travail de **oga83** du forum https://routeur4g.fr/ . 
 
 ## Pré-requis
-### Pour avoir BASH sous Windows 
+### Pour avoir BASH sous Windows 10
 * Installer la fonctionnalité "Sous-sytème Windows pour Linux" via la commande (Win+R) : optionalfeatures
 * Installer une distri Linux via le Microsoft Store ( [Ubuntu](https://www.microsoft.com/store/productId/9NBLGGH4MSV6) ou [Debian](https://www.microsoft.com/store/productId/9MSVKQC78PK6) )
 * Vérifier que les paquets suivants sont bien installés : curl et wget (ce n'est pas le cas sur Debian)
@@ -19,6 +19,9 @@ sudo apt update
 sudo apt install curl
 sudo apt install wget
 ```
+### Pour avoir BASH sous Windows 11
+en cours de tests...
+
 ### AutoHotkey
 Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant la version compilée (.exe), sinon vous pouvez installer le logiciel : https://www.autohotkey.com/download/ahk-install.exe
 
