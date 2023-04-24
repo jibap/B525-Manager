@@ -20,7 +20,8 @@ sudo apt install curl
 sudo apt install wget
 ```
 ### Pour avoir BASH sous Windows 11
-en cours de tests...
+Idem Windows 10 + installer également la fonctionnalité "Plateforme de machine virtuelle" lors de la première étape. 
+Il manque juste des icones système spécifiques à W10... je vais tenter de corriger le pb quand j'aurai un moment !
 
 ### AutoHotkey
 Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant la version compilée (.exe), sinon vous pouvez installer le logiciel : https://www.autohotkey.com/download/ahk-install.exe
