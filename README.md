@@ -20,8 +20,8 @@ sudo apt install curl
 sudo apt install wget
 ```
 ### Pour avoir BASH sous Windows 11
-* Idem Windows 10 + installer également la fonctionnalité "Plateforme de machine virtuelle" lors de la première étape.
-* Il faut mettre à jour le noyau linux : https://learn.microsoft.com/fr-fr/windows/wsl/install-manual#step-4---download-the-linux-kernel-update-package 
+* Idem Windows 10 + installer également la fonctionnalité "Plateforme de machine virtuelle" lors de la première étape. (il est aussi possible d'activer WSL depuis le store ici : https://apps.microsoft.com/store/detail/windows-subsystem-for-linux/9P9TQF7MRM4R)
+* Il faut mettre à jour le noyau linux : https://learn.microsoft.com/fr-fr/windows/wsl/install-manual#step-4---download-the-linux-kernel-update-package  \
 Il manque juste des icones système spécifiques à W10... je vais tenter de corriger le pb quand j'aurai un moment !
 
 ### AutoHotkey
