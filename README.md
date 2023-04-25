@@ -25,7 +25,7 @@ sudo apt install wget
 Il manque juste des icones système spécifiques à W10... je vais tenter de corriger le pb quand j'aurai un moment !
 
 ### AutoHotkey
-Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant la version compilée (.exe), sinon vous pouvez installer le logiciel : https://www.autohotkey.com/download/ahk-install.exe
+Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant la version compilée (.exe), sinon vous pouvez installer le logiciel : https://www.autohotkey.com/download/ahk-install.exe (NB: script écrit en V1 donc ne fonctionne pas en V2)
 
 ### Configuration
 Il est nécessaire de renseigner le fichier config.ini, tout au moins l'entrée **ROUTER_PASSWORD**, les autres entrées étant optionnelles ou générées par défaut.
