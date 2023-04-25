@@ -22,7 +22,7 @@ sudo apt install wget
 ### Pour avoir BASH sous Windows 11
 * Idem Windows 10 + installer également la fonctionnalité "Plateforme de machine virtuelle" lors de la première étape. (il est aussi possible d'activer WSL2 depuis le store ici : https://apps.microsoft.com/store/detail/windows-subsystem-for-linux/9P9TQF7MRM4R)
 * Si WSL (depuis ajout de fonctionnalités) Il faut mettre à jour le noyau linux : https://learn.microsoft.com/fr-fr/windows/wsl/install-manual#step-4---download-the-linux-kernel-update-package  \
-Il manque juste des icones système spécifiques à W10... je vais tenter de corriger le pb quand j'aurai un moment !
+Les icones systèmes ayant changé sur W11, j'ai ajouté 2 nouveaux fichiers pour W11 (.ahk et .exe)
 
 ### AutoHotkey
 Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant la version compilée (.exe), sinon vous pouvez installer le logiciel : https://www.autohotkey.com/download/ahk-install.exe (NB: script écrit en V1 donc ne fonctionne pas en V2)
