@@ -10,7 +10,7 @@ Je l'ai donc crée avec AutoHotKey et Bash en partant du travail de **oga83** du
 
 ## Pré-requis
 ### Pour avoir BASH sous Windows 10
-* Installer la fonctionnalité "Sous-sytème Windows pour Linux" via la commande (Win+R) : optionalfeatures
+* Installer la fonctionnalité "Sous-sytème Windows pour Linux" (WSL) via la commande (Win+R) : optionalfeatures
 * Installer une distri Linux via le Microsoft Store ( [Ubuntu](https://www.microsoft.com/store/productId/9NBLGGH4MSV6) ou [Debian](https://www.microsoft.com/store/productId/9MSVKQC78PK6) )
 * Vérifier que les paquets suivants sont bien installés : curl et wget (ce n'est pas le cas sur Debian)
 
@@ -20,8 +20,8 @@ sudo apt install curl
 sudo apt install wget
 ```
 ### Pour avoir BASH sous Windows 11
-* Idem Windows 10 + installer également la fonctionnalité "Plateforme de machine virtuelle" lors de la première étape. (il est aussi possible d'activer WSL depuis le store ici : https://apps.microsoft.com/store/detail/windows-subsystem-for-linux/9P9TQF7MRM4R)
-* Il faut mettre à jour le noyau linux : https://learn.microsoft.com/fr-fr/windows/wsl/install-manual#step-4---download-the-linux-kernel-update-package  \
+* Idem Windows 10 + installer également la fonctionnalité "Plateforme de machine virtuelle" lors de la première étape. (il est aussi possible d'activer WSL2 depuis le store ici : https://apps.microsoft.com/store/detail/windows-subsystem-for-linux/9P9TQF7MRM4R)
+* Si WSL (depuis ajout de fonctionnalités) Il faut mettre à jour le noyau linux : https://learn.microsoft.com/fr-fr/windows/wsl/install-manual#step-4---download-the-linux-kernel-update-package  \
 Il manque juste des icones système spécifiques à W10... je vais tenter de corriger le pb quand j'aurai un moment !
 
 ### AutoHotkey
