@@ -1,4 +1,4 @@
-﻿#Persistent
+#Persistent
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  ; Enable warnings to assist with detecting common errors.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
@@ -50,9 +50,9 @@ if(!defaultSMS || !RegExMatch(defaultSMS,"^\d+$")){
 
 ; Création d'une liste d'icones système 
 ImageListID := IL_Create(3)
-IL_Add(ImageListID, "shell32.dll", 123) ; In
-IL_Add(ImageListID, "shell32.dll", 147) ; Out
-IL_Add(ImageListID, "shell32.dll", 321) ; Unread
+IL_Add(ImageListID, "shell32.dll", 248) ; In
+IL_Add(ImageListID, "shell32.dll", 247) ; Out
+IL_Add(ImageListID, "shell32.dll", 209) ; Unread
 
 updateTrayIcon("noSMS")
 
