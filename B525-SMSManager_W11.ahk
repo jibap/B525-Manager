@@ -67,7 +67,7 @@ Menu, tray, add, Envoyer un SMS, SendSMSGUI
 Menu, tray, add
 Menu, tray, add, Afficher tous les SMS, ListSMSGUI
 Menu, tray, add
-Menu, tray, add, Actualiser, refreshStatus
+Menu, tray, add, Actualiser, ListSMSGUIButtonActualiser
 Menu, tray, Default, Afficher tous les SMS
 
 ; Création de l'interface de liste SMS
@@ -166,6 +166,23 @@ refreshStatus(quiet=1){
 	Global noticeText
 	Gui, ListSMSGUI:Default ; Focus sur la GUI pour éditer les éléments dedans (Text, Edit, ListView)
 	clearGUI()
+
+	; Vérification BOX joignable
+	Global ipRouter
+	cmd := "ping " . ipRouter . " -n 1 -w 1000"
+	RunWait, %cmd% ,, Hide
+	if(ErrorLevel == 1){	
+		if(!quiet){	
+			noticeText = "La box 4G est injoignable, veuillez vérifier la connexion..."
+			TrayTip, Box4G : erreur, % noticeText
+		}
+		; actualisation de l'icone 
+		updateTrayIcon("net")
+		Exit
+	}else{
+		; actualisation de l'icone 
+		updateTrayIcon("noSMS")
+	}
 
 	if(!quiet){
 		SplashTextOn, 300 , 40 , SMS, Actualisation de la liste, merci de patienter...
