@@ -1,4 +1,4 @@
-﻿#Persistent
+#Persistent
 #NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  ; Enable warnings to assist with detecting common errors.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
@@ -67,7 +67,7 @@ Menu, tray, add, Envoyer un SMS, SendSMSGUI
 Menu, tray, add
 Menu, tray, add, Afficher tous les SMS, ListSMSGUI
 Menu, tray, add
-Menu, tray, add, Actualiser, refreshStatus
+Menu, tray, add, Actualiser, ListSMSGUIButtonActualiser
 Menu, tray, Default, Afficher tous les SMS
 
 ; Création de l'interface de liste SMS
@@ -80,7 +80,7 @@ Gui, ListSMSGUI:Add, Button, hWndhButton3 x510 y8 w200 r2, %A_Space%Supprimer to
 SetButtonIcon(hButton3, "shell32.dll", 132, 20)
 Gui, ListSMSGUI:Add, ListView, section xs R10 w700 vLVSMS gListSMSTrigger Grid AltSubmit,  | Numéro | Date - Heure | Message
 Gui, ListSMSGUI:Add, Picture, section Icon161 w16 h16, shell32.dll
-Gui, ListSMSGUI:Add, Text, ys w100 h20 vFullNumero, 
+Gui, ListSMSGUI:Add, Edit, ReadOnly ys w100 h20 vFullNumero, 
 Gui, ListSMSGUI:Add, Picture, ys Icon266 w16 h16, shell32.dll
 Gui, ListSMSGUI:Add, Text, ys w200 h20 vFullDate, 
 Gui, ListSMSGUI:Add, Picture, section xs Icon157 w16 h16, shell32.dll
@@ -166,6 +166,23 @@ refreshStatus(quiet=1){
 	Global noticeText
 	Gui, ListSMSGUI:Default ; Focus sur la GUI pour éditer les éléments dedans (Text, Edit, ListView)
 	clearGUI()
+
+	; Vérification BOX joignable
+	Global ipRouter
+	cmd := "ping " . ipRouter . " -n 1 -w 1000"
+	RunWait, %cmd% ,, Hide
+	if(ErrorLevel == 1){	
+		if(!quiet){	
+			noticeText = "La box 4G est injoignable, veuillez vérifier la connexion..."
+			TrayTip, Box4G : erreur, % noticeText
+		}
+		; actualisation de l'icone 
+		updateTrayIcon("net")
+		Exit
+	}else{
+		; actualisation de l'icone 
+		updateTrayIcon("noSMS")
+	}
 
 	if(!quiet){
 		SplashTextOn, 300 , 40 , SMS, Actualisation de la liste, merci de patienter...
@@ -370,13 +387,14 @@ ListSMSGUIButtonSupprimertouslesmessages:
 	MsgBox, 49, ATTENTION !, Tous les messages seront supprimés définitivement, c'est sûr ?
 	IfMsgBox, OK
 	{
-		SplashTextOn, 200 , 50 , SMS, Suppresion en cours...
+		Gui, Hide
+		; SplashTextOn, 200 , 50 , SMS, Suppression en cours...
 	  runShellCmd("delete-all 1")
 	  runShellCmd("delete-all 2")
-		SplashTextOn, 200 , 50 , SMS, Suppresion terminée !
-		Sleep 1000
-		SplashTextOff
-		refreshStatus(0)
+		; SplashTextOn, 200 , 50 , SMS, Suppression terminée !
+		; Sleep 1000
+		; SplashTextOff
+		refreshStatus(1)
 	}
 return 
 
