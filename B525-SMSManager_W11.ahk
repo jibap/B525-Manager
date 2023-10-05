@@ -148,7 +148,7 @@ runShellCmd(option){
 	Global scriptPath
 	updateTrayIcon("load")
 	objShell := ComObjCreate("WScript.Shell")
-	objExec := % objShell.Exec("powershell -WindowStyle Hidden -command bash.exe /mnt/" . scriptPath . "/manage_sms.sh " . option)
+	objExec := % objShell.Exec("bash.exe /mnt/" . scriptPath . "/manage_sms.sh " . option)
 	objOut := objExec.StdOut.ReadAll() ;read the output at once
 	return 	JEE_StrUtf8BytesToText(objOut)    
 }
