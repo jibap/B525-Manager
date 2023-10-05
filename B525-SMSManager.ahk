@@ -8,6 +8,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 FileInstall, more.ico, %A_ScriptDir%\more.ico
 FileInstall, noSMS.ico, %A_ScriptDir%\noSMS.ico
 FileInstall, load.ico, %A_ScriptDir%\load.ico
+FileInstall, net.ico, %A_ScriptDir%\net.ico
 FileInstall, manage_sms.sh, %A_ScriptDir%\manage_sms.sh
 FileInstall, config.ini, %A_ScriptDir%\config.ini
 
