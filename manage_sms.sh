@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Written by oga83, custom by Jibap
 
 # construct config file path
