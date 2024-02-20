@@ -49,6 +49,7 @@ Si vous utilisez déjà AHK (ou que vous préférez ne pas utiliser un .exe prov
 
 Une section "contacts" est proposée en dessous, cela permets de convertir automatiquement à l'affichage des numéros de téléphone en un label de contact, la syntaxe est simple : 
 **06XXXXXXXX**=NOM PRENOM (ou toute autre info)
+<img src="https://routeur4g.fr/discussions/uploads/5NXK814BXFXM/image.png"/>
 
 Une fois le logiciel en cours d'exécution, une icône s'affiche au niveau de la zone de notification de Windows (à côté de l'horloge). 
 
@@ -63,6 +64,7 @@ Une fois le logiciel en cours d'exécution, une icône s'affiche au niveau de la
 <img src="https://routeur4g.fr/discussions/uploads/editor/1d/2hoxc4rfc9ij.png"/>
 
 * **Une nouvelle fonctionnalité (02/2024)** permets désormais d'activer ou désactiver le wifi, directement depuis le menu de la zone de notification ou sur un bouton dans l'interface du gestionnaire.
+<img src="https://routeur4g.fr/discussions/uploads/FMO1PI3EZCBH/image.png"/>
 
 ### Comportement
 * L'icone de la marque Huawei est blanche si aucun nouveau message. <img src="noSMS.ico" width="20px"/>
