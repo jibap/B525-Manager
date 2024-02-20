@@ -1,7 +1,7 @@
 # B525-SMSManager
 Fonctionne sur Huawei B525s-65a (fonctionne peut-être sur d'autres modèles si API similaires).
 
-**Pour Windows : Notification dès qu'un SMS arrive et UI gestionnaire de SMS (suppression, envoi...)** \
+**Pour Windows : Notification dès qu'un SMS arrive et UI gestionnaire de SMS (suppression, envoi...) + Interrupteur WIFI direct** \
 **Pour Linux** : le fichier manage_sms.sh est utilisable en terminal (help inclus)
 
 ## Projet
@@ -47,6 +47,9 @@ Si vous utilisez déjà AHK (ou que vous préférez ne pas utiliser un .exe prov
 
 <img src="https://routeur4g.fr/discussions/uploads/editor/tz/j56x2d0tsxvy.png"/>
 
+Une section "contacts" est proposée en dessous, cela permets de convertir automatiquement à l'affichage des numéros de téléphone en un label de contact, la syntaxe est simple : 
+**06XXXXXXXX**=NOM PRENOM (ou toute autre info)
+
 Une fois le logiciel en cours d'exécution, une icône s'affiche au niveau de la zone de notification de Windows (à côté de l'horloge). 
 
 ## Usage
@@ -58,6 +61,8 @@ Une fois le logiciel en cours d'exécution, une icône s'affiche au niveau de la
 
 * **Un double clic** sur l'icone affiche l'interface de gestion des SMS : une liste de tous les SMS présents sur la box\
 <img src="https://routeur4g.fr/discussions/uploads/editor/1d/2hoxc4rfc9ij.png"/>
+
+* **Une nouvelle fonctionnalité (02/2024)** permets désormais d'activer ou désactiver le wifi, directement depuis le menu de la zone de notification ou sur un bouton dans l'interface du gestionnaire.
 
 ### Comportement
 * L'icone de la marque Huawei est blanche si aucun nouveau message. <img src="noSMS.ico" width="20px"/>
