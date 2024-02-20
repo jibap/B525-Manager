@@ -119,12 +119,28 @@ deleteAll(){ # param 1 = boxtype (1: reçus, 2: envoyés)
 sendSMS(){
 	DATA="<?xml version='1.0' encoding='UTF-8'?><request><Index>-1</Index><Phones><Phone>$1</Phone></Phones><Sca></Sca><Content>$2</Content><Length>${#2}</Length><Reserved>1</Reserved><Date>`date +'%F %T'`</Date></request>"
 	PostRouterData "/api/sms/send-sms" "$DATA" 1
+}
 
+getWifiStatus(){
+	GetRouterData "/api/wlan/status-switch-settings"
+	RESPONSE=`echo "$RESPONSE" | grep -oP --max-count=1 "(?<=<wifienable>)[[:digit:]]+" | head -1`;
+}
+
+changeWifiStatus(){
+	DATA="<?xml version="1.0" encoding="UTF-8"?><request><radios><radio><wifienable>$1</wifienable><index>0</index><ID>InternetGatewayDevice.X_Config.Wifi.Radio.1.</ID></radio><radio><wifienable>$1</wifienable><index>1</index><ID>InternetGatewayDevice.X_Config.Wifi.Radio.2.</ID></radio></radios><WifiRestart>1</WifiRestart></request>"
+	PostRouterData "/api/wlan/status-switch-settings" "$DATA" 1
+}
+
+activateWifi(){
+	changeWifiStatus "1"
+}
+deactivateWifi(){
+	changeWifiStatus "0"
 }
 
 #*************************************************** MAIN *********************************************
 
-usage="Usage: manage_sms.sh <command> \n\n Commands:\tget-count <Unread / Inbox / Outbox>\n \t\tget-sms <1=reçus, 2=envoyés>\n \t\tread-all \n \t\tdelete-all \n \t\tsend-sms <Message> <Numero> \n"
+usage="Usage: manage_sms.sh <command> \n\n Commands:\tget-count <Unread / Inbox / Outbox>\n \t\tget-sms <1=reçus, 2=envoyés>\n \t\tread-all \n \t\tdelete-all \n \t\tget-wifi \n \t\tactivate-wifi \n \t\tdeactivate-wifi \n \t\tsend-sms <Message> <Numero> \n"
 
 
 if [ ! $ROUTER_USERNAME ]; then ROUTER_USERNAME=admin ; fi
@@ -171,6 +187,9 @@ case $1 in
  	read-all) connect; tagAllAsRead;;
  	delete-all) connect; deleteAll $BOX_TYPE;;
 	send-sms) connect; sendSMS "$SMS_NUMBER" "$SMS_TEXT";;
+	get-wifi) connect; getWifiStatus; printf "$RESPONSE";;
+	activate-wifi) connect; activateWifi;;
+	deactivate-wifi) connect; deactivateWifi;;
 	*) printf "\e[91mERROR : Command '$1' unavailable\e[0m \n $usage" $0
 esac
 
