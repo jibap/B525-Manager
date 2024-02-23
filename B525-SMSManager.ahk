@@ -53,7 +53,7 @@ if(!defaultSMS || !RegExMatch(defaultSMS,"^\d+$")){
 ImageListID := IL_Create(3)
 IL_Add(ImageListID, "imageres.dll", 176) ; In
 IL_Add(ImageListID, "imageres.dll", 195) ; Out
-IL_Add(ImageListID, "shell32.dll", 209) ; Unread
+IL_Add(ImageListID, "shell32.dll", 321) ; Unread
 
 
 updateTrayIcon("noSMS")
@@ -84,13 +84,13 @@ Gui, ListSMSGUI: New
 Gui, ListSMSGUI:Add, Button, hWndhButton1 x10 y8 w100 r2, %A_Space%Actualiser
 SetButtonIcon(hButton1, "shell32.dll", 239, 20)
 Gui, ListSMSGUI:Add, Button, hWndhButton2 x280 y8 w220 r2, %A_Space%Marquer tous les messages comme lus
-SetButtonIcon(hButton2, "shell32.dll", 301, 20)
+SetButtonIcon(hButton2, "shell32.dll", 297, 20)
 Gui, ListSMSGUI:Add, Button, hWndhButton3 x510 y8 w200 r2, %A_Space%Supprimer tous les messages
 SetButtonIcon(hButton3, "shell32.dll", 132, 20)
 Gui, ListSMSGUI:Add, ListView, section xs R10 w700 vLVSMS gListSMSTrigger Grid AltSubmit,  | Numéro | Date - Heure | Message
 Gui, ListSMSGUI:Add, Picture, section Icon161 w16 h16, shell32.dll
 Gui, ListSMSGUI:Add, Edit, ReadOnly ys w150 h20 vFullNumero, 
-Gui, ListSMSGUI:Add, Picture, ys Icon250 w16 h16, shell32.dll
+Gui, ListSMSGUI:Add, Picture, ys Icon266 w16 h16, shell32.dll
 Gui, ListSMSGUI:Add, Text, ys w200 h20 vFullDate, 
 Gui, ListSMSGUI:Add, Picture, section xs Icon157 w16 h16, shell32.dll
 Gui, ListSMSGUI:Add, Edit, ReadOnly ys w670 h50 vFullMessage, Double-clic sur une ligne pour afficher le message ici
@@ -176,22 +176,18 @@ convertXMLtoArray(xmldata , rootNode){
 	return nodes
 }
 
+
 refreshWifiStatus(){
 	Global wifiStatus
 	Gui, ListSMSGUI:Default ; Focus sur la GUI pour éditer les éléments dedans (Text, Edit, ListView)
 	; Adaptation des labels du statut WIFI
-	if(wifiStatus = 0){
-		previousWifiStatus = Activer le Wifi
-	} else{
-		previousWifiStatus = Désactiver le Wifi
-	}
 	wifiStatus = % getWifiStatus()
 	if(wifiStatus = 1){
 		GuiControl,,WifiStatusButton, Désactiver le Wifi
-		Menu, Tray, Rename, % previousWifiStatus , Désactiver le Wifi
+		Menu, Tray, Rename, 3& , Désactiver le Wifi
 	}else{
 		GuiControl,,WifiStatusButton, Activer le Wifi
-		Menu, Tray, Rename, % previousWifiStatus , Activer le Wifi
+		Menu, Tray, Rename, 3& , Activer le Wifi
 	}
 }
 
@@ -222,7 +218,7 @@ refreshStatus(quiet=1){
 	}
 	
 	refreshWifiStatus()
-
+	
 	updateTrayIcon("load")
 	; Récupération de tous les comptes de la boite
 	SMSCountsXML = % getSMSCount("All")
@@ -465,9 +461,9 @@ SendSMSGUI:
 	}
 
 	Gui, SendSMSGUI:Add, Button, section xs hWndhButton10 w150 r2 gSendSMSGUIGuiClose, Annuler
-	SetButtonIcon(hButton10, "shell32.dll", 296, 20)
+	SetButtonIcon(hButton10, "shell32.dll", 298, 20)
 	Gui, SendSMSGUI:Add, Button, ys hWndhButton11 w150 r2, Envoi 
-	SetButtonIcon(hButton11, "shell32.dll", 301, 20)
+	SetButtonIcon(hButton11, "shell32.dll", 297, 20)
 	Gui, SendSMSGUI:Show,, Envoi de SMS sur Box4G
 	return
 
