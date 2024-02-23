@@ -176,22 +176,18 @@ convertXMLtoArray(xmldata , rootNode){
 	return nodes
 }
 
+
 refreshWifiStatus(){
 	Global wifiStatus
 	Gui, ListSMSGUI:Default ; Focus sur la GUI pour éditer les éléments dedans (Text, Edit, ListView)
 	; Adaptation des labels du statut WIFI
-	if(wifiStatus = 0){
-		previousWifiStatus = Activer le Wifi
-	} else{
-		previousWifiStatus = Désactiver le Wifi
-	}
 	wifiStatus = % getWifiStatus()
 	if(wifiStatus = 1){
 		GuiControl,,WifiStatusButton, Désactiver le Wifi
-		Menu, Tray, Rename, % previousWifiStatus , Désactiver le Wifi
+		Menu, Tray, Rename, 3& , Désactiver le Wifi
 	}else{
 		GuiControl,,WifiStatusButton, Activer le Wifi
-		Menu, Tray, Rename, % previousWifiStatus , Activer le Wifi
+		Menu, Tray, Rename, 3& , Activer le Wifi
 	}
 }
 
