@@ -22,7 +22,6 @@ sudo apt install wget
 ### Pour avoir BASH sous Windows 11
 * Idem Windows 10 + installer également la fonctionnalité "Plateforme de machine virtuelle" lors de la première étape. (il est aussi possible d'activer WSL2 depuis le store ici : https://apps.microsoft.com/store/detail/windows-subsystem-for-linux/9P9TQF7MRM4R)
 * Si WSL (depuis ajout de fonctionnalités) Il faut mettre à jour le noyau linux : https://learn.microsoft.com/fr-fr/windows/wsl/install-manual#step-4---download-the-linux-kernel-update-package  \
-Les icones systèmes ayant changé sur W11, j'ai ajouté 2 nouveaux fichiers pour W11 (.ahk et .exe)
 
 ### AutoHotkey
 Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant la version compilée (.exe), sinon vous pouvez installer le logiciel : https://www.autohotkey.com/download/ahk-install.exe (NB: script écrit en V1 donc ne fonctionne pas en V2)
@@ -71,6 +70,6 @@ Une fois le logiciel en cours d'exécution, une icône s'affiche au niveau de la
 * L'icone passe au rouge quand une interrogation de la box est en cours. <img src="load.ico" width="20px" />
 * L'icone change pour une bulle de citation avec "..." pour indiquer qu'un nouveau message est présent. <img src="more.ico" width="20px"/>
 
-A chaque actualisation (5 minutes par défaut), le logiciel vérifie si de nouveaux SMS sont arrivés, si c'est le cas, une notification Windows apparaîtra avec le contenu des nouveaux messages (très utile pour les code de double authentification e-commerce !)
+A chaque actualisation (5 minutes par défaut), le logiciel vérifie si de nouveaux SMS sont arrivés, si c'est le cas, une notification Windows apparaîtra pour chaque nouveau message (très utile pour les code de double authentification e-commerce !)
 
 <img src="https://routeur4g.fr/discussions/uploads/editor/dz/vqvcgxw4wgac.png" />
