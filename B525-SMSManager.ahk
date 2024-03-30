@@ -4,6 +4,8 @@
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
+OnMessage(0x404, Func("AHK_NOTIFYICON")) ; CLIC sur la notif pour ouvrir la GUI
+
 ; IMPORT / EXPORT des fichiers annexes pour version compilée
 FileInstall, more.ico, %A_ScriptDir%\more.ico
 FileInstall, noSMS.ico, %A_ScriptDir%\noSMS.ico
@@ -12,17 +14,11 @@ FileInstall, net.ico, %A_ScriptDir%\net.ico
 FileInstall, manage_sms.sh, %A_ScriptDir%\manage_sms.sh
 FileInstall, config.ini, %A_ScriptDir%\config.ini
 
-
-
 ; Transposition du chemin du script pour le BASH
 StringReplace , scriptPath, A_ScriptDir , : , 
 StringReplace , scriptPath, scriptPath , \ , / , All
 ; lowercase first letter (partition letter)
 scriptPath = % RegExReplace(scriptPath, "^.", "$l0",,1)
-
-; Pour cacher la fenêtre de powershell
-DllCall("AllocConsole")
-WinHide % "ahk_id " DllCall("GetConsoleWindow", "ptr")
 
 
   ; ###   #   #   ###   #####
@@ -34,6 +30,38 @@ WinHide % "ahk_id " DllCall("GetConsoleWindow", "ptr")
   ; ###   #   #   ###     #
 
 wifiStatus = 0
+lastIcon = noSMS
+helpText = Double-clic sur une ligne pour afficher et pouvoir sélectionner les détails du SMS dans cette zone
+tempFilePath := "tempB525Manager.tmp"
+
+; ICONS
+validIconID = 301
+outboxIconID = 195
+unreadIconID = 209
+enableWifiIconID = 53
+openWebPageIconID = 136
+sendSMSIconID = 215
+refreshIconID = 239
+deleteIconID = 132
+numeroIconID = Icon161
+dateIconID = Icon250
+messageIconID = Icon157
+reduceIconID = 248
+cancelIconID = 296
+
+
+	; GET WINDOWS VERSION
+	objWMIService := ComObjGet("winmgmts:{impersonationLevel=impersonate}!\\" A_ComputerName "\root\cimv2")
+	For objOperatingSystem in objWMIService.ExecQuery("Select * from Win32_OperatingSystem")
+	   windowsVersion := objOperatingSystem.Caption
+	; IF WINDOWS 10
+	if(InStr(windowsVersion, "10")){
+		validIconID = 297
+		unreadIconID = 321
+		dateIconID = Icon266
+		cancelIconID = 298
+		enableWifiIconID = 51
+	}
 
 ; Initialisation personnalisée, le cas échéant, des variables globales
 IniRead, ipRouter, %A_ScriptDir%\config.ini, main, ROUTER_IP
@@ -49,11 +77,11 @@ if(!defaultSMS || !RegExMatch(defaultSMS,"^\d+$")){
 	defaultSMS = 
 }
 
-; Création d'une liste d'icones système 
+; Création d'une liste d'icones système pour la ListView
 ImageListID := IL_Create(3)
-IL_Add(ImageListID, "imageres.dll", 176) ; In
-IL_Add(ImageListID, "imageres.dll", 195) ; Out
-IL_Add(ImageListID, "shell32.dll", 321) ; Unread
+IL_Add(ImageListID, "shell32.dll", validIconID)
+IL_Add(ImageListID, "imageres.dll", outboxIconID)
+IL_Add(ImageListID, "shell32.dll", unreadIconID)
 
 
 updateTrayIcon("noSMS")
@@ -62,46 +90,47 @@ updateTrayIcon("noSMS")
 ; CREATION DU TRAYMENU
 ; *****************************
 Menu, tray, NoStandard
-Menu, tray, add, Fermer l'application, ExitAppli
+Menu, tray, add, Quitter l'application, ExitAppli
 Menu, tray, add
 Menu, tray, add, Activer le Wifi, SwitchWifi
 Menu, tray, add
 Menu, tray, add, Ouvrir la page Web, Link
 Menu, tray, add, Envoyer un SMS, SendSMSGUI
 Menu, tray, add
-Menu, tray, add, Afficher le gestionnaire, ListSMSGUI
+Menu, tray, add, Ouvrir l'interface, OpenListSMSGUI
 Menu, tray, add
-Menu, tray, add, Actualiser, ListSMSGUIButtonActualiser
-Menu, tray, Default,  Afficher le gestionnaire
+Menu, tray, add, Actualiser, refreshStatus
+Menu, tray, Default,  Ouvrir l'interface
 
-Menu, tray, Icon, Activer le Wifi, ddores.dll, 53
-Menu, tray, Icon, Ouvrir la page Web, shell32.dll, 136
-Menu, tray, Icon, Envoyer un SMS, shell32.dll, 215
-Menu, tray, Icon, Actualiser, shell32.dll, 239
+Menu, tray, Icon, Quitter l'application, shell32.dll, %deleteIconID%
+Menu, tray, Icon, Activer le Wifi, ddores.dll, %enableWifiIconID%
+Menu, tray, Icon, Ouvrir la page Web, shell32.dll, %openWebPageIconID%
+Menu, tray, Icon, Envoyer un SMS, shell32.dll, %sendSMSIconID%
+Menu, tray, Icon, Actualiser, shell32.dll, %refreshIconID%
 
 ; Création de l'interface de liste SMS
-Gui, ListSMSGUI: New
+Gui, ListSMSGUI: New, +HwndMyGuiHwnd, B525-Manager
 Gui, ListSMSGUI:Add, Button, hWndhButton1 x10 y8 w100 r2, %A_Space%Actualiser
-SetButtonIcon(hButton1, "shell32.dll", 239, 20)
+SetButtonIcon(hButton1, "shell32.dll", refreshIconID, 20)
 Gui, ListSMSGUI:Add, Button, hWndhButton2 x280 y8 w220 r2, %A_Space%Marquer tous les messages comme lus
-SetButtonIcon(hButton2, "shell32.dll", 297, 20)
+SetButtonIcon(hButton2, "shell32.dll", validIconID, 20)
 Gui, ListSMSGUI:Add, Button, hWndhButton3 x510 y8 w200 r2, %A_Space%Supprimer tous les messages
-SetButtonIcon(hButton3, "shell32.dll", 132, 20)
+SetButtonIcon(hButton3, "shell32.dll", deleteIconID, 20)
 Gui, ListSMSGUI:Add, ListView, section xs R10 w700 vLVSMS gListSMSTrigger Grid AltSubmit,  | Numéro | Date - Heure | Message
-Gui, ListSMSGUI:Add, Picture, section Icon161 w16 h16, shell32.dll
+Gui, ListSMSGUI:Add, Picture, section %numeroIconID% w16 h16, shell32.dll
 Gui, ListSMSGUI:Add, Edit, ReadOnly ys w150 h20 vFullNumero, 
-Gui, ListSMSGUI:Add, Picture, ys Icon266 w16 h16, shell32.dll
+Gui, ListSMSGUI:Add, Picture, ys %dateIconID% w16 h16, shell32.dll
 Gui, ListSMSGUI:Add, Text, ys w200 h20 vFullDate, 
-Gui, ListSMSGUI:Add, Picture, section xs Icon157 w16 h16, shell32.dll
-Gui, ListSMSGUI:Add, Edit, ReadOnly ys w670 h50 vFullMessage, Double-clic sur une ligne pour afficher le message ici
+Gui, ListSMSGUI:Add, Picture, section xs %messageIconID% w16 h16, shell32.dll
+Gui, ListSMSGUI:Add, Edit, ReadOnly ys w670 h50 vFullMessage, %helpText%
 Gui, ListSMSGUI:Add, Button, section xs hWndhButton5  w150 r2 gLink, %A_Space%Ouvrir la page Web
-SetButtonIcon(hButton5, "shell32.dll", 136, 20)
+SetButtonIcon(hButton5, "shell32.dll", openWebPageIconID, 20)
 Gui, ListSMSGUI:Add, Button, ys hWndhButtonWifi x200 w140 r2 vWifiStatusButton gSwitchWifi, %A_Space%Activer le Wifi
-SetButtonIcon(hButtonWifi, "ddores.dll", 53, 20)
+SetButtonIcon(hButtonWifi, "ddores.dll", enableWifiIconID, 20)
 Gui, ListSMSGUI:Add, Button, ys hWndhButton4 x380 w140 r2 gSendSMSGUI, %A_Space%Envoyer un SMS
-SetButtonIcon(hButton4, "shell32.dll", 25, 20)
+SetButtonIcon(hButton4, "shell32.dll", sendSMSIconID, 20)
 Gui, ListSMSGUI:Add, Button, ys hWndhButtonClose x560 w150 r2 gListSMSGUIGuiClose, Fermer
-SetButtonIcon(hButtonClose, "shell32.dll", 248, 20)
+SetButtonIcon(hButtonClose, "shell32.dll", reduceIconID, 20)
 ; TODO ?
 ; Menu, ListRCMenu, Add, Supprimer, ListSMSGUIButtonViderlalistedesmessages
 ; Menu, ListRCMenu, Add, Marquer comme lu, ListSMSGUIButtonMarquertouslesmessagescommelus
@@ -155,16 +184,28 @@ Link() {
 }
 
 updateTrayIcon(iconName){
+	Global lastIcon
+	if !iconName
+		iconName = % lastIcon
 	iconFile = %A_WorkingDir%\%iconName%.ico
 	Menu, Tray, Icon, %iconFile%
 }
 
 runShellCmd(option){
 	Global scriptPath
-	objShell := ComObjCreate("WScript.Shell")
-	objExec := % objShell.Exec("bash.exe /mnt/" . scriptPath . "/manage_sms.sh " . option)
-	objOut := objExec.StdOut.ReadAll() ;read the output at once
-	return 	JEE_StrUtf8BytesToText(objOut)    
+	Global tempFilePath
+	cmd := "bash.exe /mnt/" . scriptPath . "/manage_sms.sh " . option
+	RunWait, %ComSpec% /c %cmd% > %tempFilePath%,,Hide
+	FileRead, cmdResult, %tempFilePath%
+	FileDelete, %tempFilePath%
+	objOut := JEE_StrUtf8BytesToText(cmdResult)
+	if(InStr(objOut,"PASSWORD")){
+		noticeText = Le mot de passe configuré est incorrect.`nVeuillez vérifier le fichier "config.ini" `Le compte est peut-être aussi vérrouillé suite à de trop nombreuses tentatives incorrectes... 
+		TrayTip, Box 4G : Erreur, % noticeText
+		updateTrayIcon("net")
+		ExitApp
+	}
+	return 	objOut
 }
 
 convertXMLtoArray(xmldata , rootNode){
@@ -176,52 +217,59 @@ convertXMLtoArray(xmldata , rootNode){
 	return nodes
 }
 
+guiIsOpen(){
+	Global MyGuiHwnd
+	return WinExist("ahk_id " MyGuiHwnd)
+}
+
 
 refreshWifiStatus(){
 	Global wifiStatus
-	Gui, ListSMSGUI:Default ; Focus sur la GUI pour éditer les éléments dedans (Text, Edit, ListView)
-	; Adaptation des labels du statut WIFI
 	wifiStatus = % getWifiStatus()
+
+	; Adaptation des labels du statut WIFI
+	wifiLabelCmd = Activer le WIFI
 	if(wifiStatus = 1){
-		GuiControl,,WifiStatusButton, Désactiver le Wifi
-		Menu, Tray, Rename, 3& , Désactiver le Wifi
-	}else{
-		GuiControl,,WifiStatusButton, Activer le Wifi
-		Menu, Tray, Rename, 3& , Activer le Wifi
+		wifiLabelCmd = Désactiver le WIFI
 	}
+	if guiIsOpen(){
+		GuiControl,ListSMSGUI:,WifiStatusButton, %wifiLabelCmd%
+	}
+	Menu, Tray, Rename, 3& , %wifiLabelCmd%
 }
 
-refreshStatus(quiet=1){
+refreshStatus(){
+	Global lastIcon
+	quiet := !guiIsOpen()
+
 	updateTrayIcon("load")
-	Gui, ListSMSGUI:Default ; Focus sur la GUI pour éditer les éléments dedans (Text, Edit, ListView)
-	clearGUI()
 
 	; Vérification BOX joignable
 	Global ipRouter
 	cmd := "ping " . ipRouter . " -n 1 -w 1000"
 	RunWait, %cmd% ,, Hide
 	if(ErrorLevel == 1){	
+		noticeText = La box 4G est injoignable, veuillez vérifier la connexion...
 		if(!quiet){	
-			noticeText = "La box 4G est injoignable, veuillez vérifier la connexion..."
-			TrayTip, Box4G : erreur, % noticeText
+			TrayTip, Erreur, % noticeText
 		}
+		Menu, Tray, Tip, %noticeText%
 		; actualisation de l'icone 
 		updateTrayIcon("net")
-		Exit
-	}else{
-		; actualisation de l'icone 
-		updateTrayIcon("noSMS")
+		lastIcon = "net"
+		Return
 	}
 
 	if(!quiet){
-		SplashTextOn, 300 , 40 , SMS, Actualisation de la liste, merci de patienter...
+		SplashTextOn, 300 , 40 , BOX 4G, Actualisation, merci de patienter...
 	}
 	
 	refreshWifiStatus()
-	
-	updateTrayIcon("load")
+	clearGUI()
+
 	; Récupération de tous les comptes de la boite
 	SMSCountsXML = % getSMSCount("All")
+
 	RegExMatch(SMSCountsXML,"<LocalUnread>(\d+)</LocalUnread>",unreadSMSCountNode)
 	unreadSMSCount = %unreadSMSCountNode1%
 	RegExMatch(SMSCountsXML,"<LocalInbox>(\d+)</LocalInbox>",inboxSMSCountNode)
@@ -232,11 +280,11 @@ refreshStatus(quiet=1){
 	if(inboxSMSCount || outboxSMSCount){
 		if(inboxSMSCount > 0){
 			; Récupération des messages reçus
-			createSmsList("Inbox")
+			createSmsList(1)
 		}
 		if(outboxSMSCount > 0){
 			; Récupération des messages envoyés
-			createSmsList("Outbox")
+			createSmsList(2)
 		}
 		LV_ModifyCol()  ; Auto-size
 		LV_ModifyCol(3, "SortDesc") ; Sort by Date
@@ -260,17 +308,16 @@ refreshStatus(quiet=1){
 		}else{
 			noticeTitle = %unreadSMSCount% nouveaux messages
 		}
-
-		; actualisation de l'icone 
-		updateTrayIcon("more")
+		lastIcon = more
 	}else {
 		; Il n'y a aucun message non lu 
-		updateTrayIcon("noSMS")
+		lastIcon = noSMS
 		noticeTitle = Aucun nouveau message
-		GuiControl,ListSMSGUI:,FullMessage, %noticeTitle%
 	}
+	; actualisation de l'icone 
+	updateTrayIcon(lastIcon)
 	; actualisation de l'infobulle de l'icone
-	Menu, Tray, Tip, %noticeTitle% : `n%inboxSMSCount% reçu(s) `n%outboxSMSCount% envoyé(s)
+	Menu, Tray, Tip, %noticeTitle% `n%inboxSMSCount% reçu(s) `n%outboxSMSCount% envoyé(s)
 }
 
 ; Permet de valider une IP
@@ -322,6 +369,15 @@ SetButtonIcon(hButton, File, Index, Size := 16) {
     SendMessage 0xF7, 1, %hIcon%,, ahk_id %hButton%
 }
 
+; Fonction qui permets de cliquer sur la notif Windows pour ouvrir la GUI
+AHK_NOTIFYICON(wParam, lParam, msg, hwnd)
+{
+	if (hwnd != A_ScriptHwnd)
+		return
+	if (lParam = 1029)
+		openGui()
+}
+
 ; #      #            #        ##   #  #   ##  			  ##   #  #  ###
 ; #                   #       #  #  ####  #  # 			 #  #  #  #   #
 ; #     ##     ###   ###       #    ####   #   			 #     #  #   #
@@ -329,18 +385,21 @@ SetButtonIcon(hButton, File, Index, Size := 16) {
 ; #      #      ##    #       #  #  #  #  #  # 			 #  #  #  #   #
 ; ####  ###   ###      ##      ##   #  #   ##  			  ###   ##   ###
 
+openGui(){
+	Gui, ListSMSGUI:Show
+	refreshWifiStatus()
+}
+
 clearGUI(){
+	Global helpText
+	Gui, ListSMSGUI:Default
 	LV_Delete() ; clear the table
 	GuiControl,ListSMSGUI:,FullNumero,
 	GuiControl,ListSMSGUI:,FullDate,
-	GuiControl,ListSMSGUI:,FullMessage, Double-clic sur une ligne pour afficher le message ici
+	GuiControl,ListSMSGUI:,FullMessage, %helpText%
 }
 
-createSmsList(listType){
-		boxType = 1
-		if (listType = "Outbox"){
-			boxType = 2
-		}
+createSmsList(boxType){
 		SMSList = % getSmsList(boxType)
 		messagesNodes = % convertXMLtoArray(SMSList, "//response/Messages/Message")
 		messages := messagesNodes.item(0)
@@ -358,24 +417,27 @@ createSmsList(listType){
 					iconID = 3
 					; Si le message est trop long (max 120 traytip Windows) alors on coupe et ...
 					if (StrLen(contentMessage) > 120){
-						contentMessage := SubStr(contentMessage, 1, 120) "..."
+						contentMessageTT := SubStr(contentMessage, 1, 120) "..."
+					}else{
+						contentMessageTT = % contentMessage
 					}
-					; affichage d'une notification pour chaque message
-					TrayTip, SMS Box4G : %phoneNumber%, %contentMessage%	
+					if !guiIsOpen(){						
+						; affichage d'une notification pour chaque message
+						TrayTip, SMS Box4G : %phoneNumber%, %contentMessageTT%	
+					}
 			}
 			LV_Add("Icon" . iconID " Select " ,, phoneNumber , dateMessage , contentMessage)				
 		  messages := messagesNodes.nextNode
 		}
 }
 
-ListSMSGUI:
-	Gui, ListSMSGUI:Show
-	refreshWifiStatus()
+OpenListSMSGUI:
+	openGui()
 return
 
 ; Affichage détaillé d'une ligne si clic dessus
 ListSMSTrigger: 
-	; préviens les autres clics 
+	; préviens les autres clics et force sur le double pour ne pas gêner le clic droit
 	If (A_GuiEvent != "DoubleClick"){
 	 Return
 	}
@@ -386,13 +448,13 @@ ListSMSTrigger:
 	LV_GetText(longText, A_EventInfo, 4) 
 
 	; met à jour les champs d'affichage complet
-	GuiControl,,FullNumero, %longNumero%
-	GuiControl,,FullDate, %longDate%
-	GuiControl,,FullMessage, %longText%
+	GuiControl,ListSMSGUI:,FullNumero, %longNumero%
+	GuiControl,ListSMSGUI:,FullDate, %longDate%
+	GuiControl,ListSMSGUI:,FullMessage, %longText%
 
 return
 
-; TODO
+; TODO Menu contextuel pour marquer comme lu, supprimer ou répondre
 ; ListSMSGUIGuiContextMenu:
 ; 	IF (A_EventInfo) {
 ; 		rightClickedRow := A_EventInfo 
@@ -400,17 +462,30 @@ return
 ; 	}
 ; return
 
+
+; TODO with /api/monitoring/status
+; <ConnectionStatus>901</ConnectionStatus> = OK
+; <SignalIcon>2</SignalIcon>
+; <maxsignal>5</maxsignal>
+
+; ContextProperties:  ; The user selected "Properties" in the context menu.
+; ; For simplicitly, operate upon only the focused row rather than all selected rows:
+; FocusedRowNumber := LV_GetNext(0, "F")  ; Find the focused row.
+; if not FocusedRowNumber  ; No row is focused.
+;     return
+
+
 ListSMSGUIButtonActualiser:
-	refreshStatus(0)
+	refreshStatus()
 return
 
 ListSMSGUIButtonMarquertouslesmessagescommelus:
-	SplashTextOn, 200 , 50 , SMS, Marquage en cours...
+	SplashTextOn, 200 , 50 , BOX 4G : SMS, Marquage en cours...
 	runShellCmd("read-all")
-	SplashTextOn, 200 , 50 , SMS, Marquage terminé !
+	SplashTextOn, 200 , 50 , BOX 4G : SMS, Marquage terminé !
 	Sleep 1000
 	SplashTextOff
-	refreshStatus(0)
+	refreshStatus()
 return
 
 ListSMSGUIButtonSupprimertouslesmessages:
@@ -418,13 +493,13 @@ ListSMSGUIButtonSupprimertouslesmessages:
 	IfMsgBox, OK
 	{
 		Gui, Hide
-		; SplashTextOn, 200 , 50 , SMS, Suppression en cours...
+		; SplashTextOn, 200 , 50 , BOX 4G : SMS, Suppression en cours...
 	  runShellCmd("delete-all 1")
 	  runShellCmd("delete-all 2")
-		; SplashTextOn, 200 , 50 , SMS, Suppression terminée !
+		; SplashTextOn, 200 , 50 , BOX 4G : SMS, Suppression terminée !
 		; Sleep 1000
 		; SplashTextOff
-		refreshStatus(1)
+		refreshStatus()
 	}
 return 
 
@@ -461,9 +536,9 @@ SendSMSGUI:
 	}
 
 	Gui, SendSMSGUI:Add, Button, section xs hWndhButton10 w150 r2 gSendSMSGUIGuiClose, Annuler
-	SetButtonIcon(hButton10, "shell32.dll", 298, 20)
+	SetButtonIcon(hButton10, "shell32.dll", cancelIconID, 20)
 	Gui, SendSMSGUI:Add, Button, ys hWndhButton11 w150 r2, Envoi 
-	SetButtonIcon(hButton11, "shell32.dll", 297, 20)
+	SetButtonIcon(hButton11, "shell32.dll", validIconID, 20)
 	Gui, SendSMSGUI:Show,, Envoi de SMS sur Box4G
 	return
 
@@ -492,9 +567,9 @@ SendSMSGUIButtonEnvoi:
 		StringReplace, SMSText, SMSText, >, _ , All
 		StringReplace, SMSText, SMSText, <, _ , All
 		Gui, SendSMSGUI:Hide
-		SplashTextOn, 200 , 50 , SMS, Envoi en cours...
+		SplashTextOn, 200 , 50 , BOX 4G : SMS, Envoi en cours...
 		runShellCmd("send-sms '" . SMSText . "' " . Numero)
-		SplashTextOn, 200 , 50 , SMS, Message envoyé !
+		SplashTextOn, 200 , 50 , BOX 4G : SMS, Message envoyé !
 		Sleep 1000
 		SplashTextOff
 		Gui, SendSMSGUI:Destroy
@@ -504,7 +579,7 @@ SendSMSGUIButtonEnvoi:
 
 SendSMSGUIGuiEscape:
 SendSMSGUIGuiClose:
-	Gui, SendSMSGUI:Destroy
+	Gui, SendSMSGUI:Hide
 	Return
 
 
@@ -517,15 +592,24 @@ SendSMSGUIGuiClose:
 
 
 SwitchWifi:
+	updateTrayIcon("load")
 	Global wifiStatus
+	if guiIsOpen(){
+		GuiControl, Disable ,WifiStatusButton
+	} 
+
 	if(wifiStatus = 1){
-		SplashTextOn, 200 , 50 , WIFI, Désactivation du WIFI...
+		SplashTextOn, 200 , 50 , BOX 4G : WIFI, Désactivation du WIFI...
 		runShellCmd("deactivate-wifi")
 	}	else{
-		SplashTextOn, 200 , 50 , WIFI, Activation du WIFI...
+		SplashTextOn, 200 , 50 , BOX 4G : WIFI, Activation du WIFI...
 		runShellCmd("activate-wifi")
 	}
-	Sleep 1000
-	refreshWifiStatus()
 	SplashTextOff
+	refreshWifiStatus()
+	updateTrayIcon(false) ;Restore previous icon, set by refreshStatus()
+	if guiIsOpen(){
+		Sleep 10000
+		GuiControl, Enable ,WifiStatusButton
+	} 
 	return
