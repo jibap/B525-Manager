@@ -173,7 +173,7 @@ TMP_HEADER_FILE=/tmp/headers.tmp
 CURL_OPT=--silent
 
 
-usage="Usage: manage_sms.sh <command> \n\n Commands:\tget-count [Unread,Inbox,Outbox]\n \t\tget-sms [1=reçus (par defaut), 2=envoyés]\n \t\tread-all \n \t\tdelete-all [1=reçus (par defaut), 2=envoyés]\n \t\tget-wifi \n \t\tactivate-wifi \n \t\tdeactivate-wifi \n \t\tsend-sms <Message> <Numero> \n"
+usage="Usage: manage_sms.sh <command> \n\n Commands:\tget-count [Unread,Inbox,Outbox,All]\n \t\tget-sms [1=reçus (par defaut), 2=envoyés]\n \t\tread-all \n \t\tdelete-all [1=reçus (par defaut), 2=envoyés]\n \t\tget-wifi \n \t\tactivate-wifi \n \t\tdeactivate-wifi \n \t\tsend-sms <Message> <Numero> \n"
 
 
 if [ ! $ROUTER_USERNAME ]; then ROUTER_USERNAME=admin ; fi
