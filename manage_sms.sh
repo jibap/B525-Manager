@@ -2,7 +2,7 @@
 # Written by oga83, custom by Jibap
 
 # construct config file path
-CONFIG_FILE=${0%/*}/config.ini
+CONFIG_FILE=$(dirname "$dir")/config.ini
 
 ROUTER_IP=$(awk -F '=' '/ROUTER_IP/ {print $2}' $CONFIG_FILE | tr -d '\r')
 ROUTER_USERNAME=$(awk -F "=" '/ROUTER_USERNAME/ {print $2}' $CONFIG_FILE | tr -d '\r')
@@ -78,6 +78,10 @@ connect(){
 	CREDENTIALS=`printf "%s%s%s" $ROUTER_USERNAME $CREDENTIALS $TOKEN | sha256sum | head -c64 | base64 -w0`
 	DATA=`printf "<request><Username>%s</Username><Password>%s</Password><password_type>4</password_type></request>" $ROUTER_USERNAME $CREDENTIALS`
 	PostRouterData "/api/user/login" "$DATA"
+	# Check if password is OK
+	if [[ $RESPONSE == *"108007"* ]]; then
+	  printf "\e[91mERROR : BAD PASSWORD\e[0m\n"
+	fi
 }
 
 disconnect(){
@@ -117,8 +121,10 @@ deleteAll(){ # param 1 = boxtype (1: reçus, 2: envoyés)
 }
 
 sendSMS(){
-	DATA="<?xml version='1.0' encoding='UTF-8'?><request><Index>-1</Index><Phones><Phone>$1</Phone></Phones><Sca></Sca><Content>$2</Content><Length>${#2}</Length><Reserved>1</Reserved><Date>`date +'%F %T'`</Date></request>"
+	message="${2//_NL_/$'\n'}"
+	DATA="<?xml version='1.0' encoding='UTF-8'?><request><Index>-1</Index><Phones><Phone>$1</Phone></Phones><Sca></Sca><Content>$message</Content><Length>${#2}</Length><Reserved>1</Reserved><Date>`date +'%F %T'`</Date></request>"
 	PostRouterData "/api/sms/send-sms" "$DATA" 1
+	printf "$RESPONSE"
 }
 
 getWifiStatus(){
@@ -140,7 +146,7 @@ deactivateWifi(){
 
 #*************************************************** MAIN *********************************************
 
-usage="Usage: manage_sms.sh <command> \n\n Commands:\tget-count <Unread / Inbox / Outbox>\n \t\tget-sms <1=reçus, 2=envoyés>\n \t\tread-all \n \t\tdelete-all \n \t\tget-wifi \n \t\tactivate-wifi \n \t\tdeactivate-wifi \n \t\tsend-sms <Message> <Numero> \n"
+usage="Usage: manage_sms.sh <command> \n\n Commands:\tget-count [Unread,Inbox,Outbox]\n \t\tget-sms [1=reçus (par defaut), 2=envoyés]\n \t\tread-all \n \t\tdelete-all [1=reçus (par defaut), 2=envoyés]\n \t\tget-wifi \n \t\tactivate-wifi \n \t\tdeactivate-wifi \n \t\tsend-sms <Message> <Numero> \n"
 
 
 if [ ! $ROUTER_USERNAME ]; then ROUTER_USERNAME=admin ; fi
@@ -169,7 +175,7 @@ if [ "$1" = get-sms ]; then
 	if [ ! "$2"  ] || [[ "$2" != 1 && "$2" != 2 ]]; then BOX_TYPE=1 ;else BOX_TYPE=$2;fi
 fi
 
-# si commande 'delete-sms', paramètres possible pour choisir entre sms reçus(1) ou sms envoyés(2)
+# si commande 'delete-all', paramètres possible pour choisir entre sms reçus(1) ou sms envoyés(2)
 if [ "$1" = delete-all ]; then 
 	if [ ! "$2"  ] || [[ "$2" != 1 && "$2" != 2 ]]; then BOX_TYPE=1 ;else BOX_TYPE=$2;fi
 fi
