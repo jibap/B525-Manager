@@ -1,16 +1,18 @@
 #!/bin/bash
 # Written by oga83, custom by Jibap
 
-# construct config file path
-CONFIG_FILE=../config.ini
 
-ROUTER_IP=$(awk -F '=' '/ROUTER_IP/ {print $2}' $CONFIG_FILE | tr -d '\r')
-ROUTER_USERNAME=$(awk -F "=" '/ROUTER_USERNAME/ {print $2}' $CONFIG_FILE | tr -d '\r')
-ROUTER_PASSWORD=$(awk -F "=" '/ROUTER_PASSWORD/ {print $2}' $CONFIG_FILE | tr -d '\r')
+#  /$$$$$$$$ /$$   /$$ /$$   /$$  /$$$$$$  /$$$$$$$$ /$$$$$$  /$$$$$$  /$$   /$$  /$$$$$$
+# | $$_____/| $$  | $$| $$$ | $$ /$$__  $$|__  $$__/|_  $$_/ /$$__  $$| $$$ | $$ /$$__  $$
+# | $$      | $$  | $$| $$$$| $$| $$  \__/   | $$     | $$  | $$  \ $$| $$$$| $$| $$  \__/
+# | $$$$$   | $$  | $$| $$ $$ $$| $$         | $$     | $$  | $$  | $$| $$ $$ $$|  $$$$$$
+# | $$__/   | $$  | $$| $$  $$$$| $$         | $$     | $$  | $$  | $$| $$  $$$$ \____  $$
+# | $$      | $$  | $$| $$\  $$$| $$    $$   | $$     | $$  | $$  | $$| $$\  $$$ /$$  \ $$
+# | $$      |  $$$$$$/| $$ \  $$|  $$$$$$/   | $$    /$$$$$$|  $$$$$$/| $$ \  $$|  $$$$$$/
+# |__/       \______/ |__/  \__/ \______/    |__/   |______/ \______/ |__/  \__/ \______/
 
-TMP_HEADER_FILE=/tmp/headers.tmp
 
-CURL_OPT=--silent
+
 
 is_validIP() {
     local ip=$1
@@ -144,7 +146,32 @@ deactivateWifi(){
 	changeWifiStatus "0"
 }
 
-#*************************************************** MAIN *********************************************
+   # $$\      $$\  $$$$$$\  $$$$$$\ $$\   $$\
+   # $$$\    $$$ |$$  __$$\ \_$$  _|$$$\  $$ |
+   # $$$$\  $$$$ |$$ /  $$ |  $$ |  $$$$\ $$ |
+   # $$\$$\$$ $$ |$$$$$$$$ |  $$ |  $$ $$\$$ |
+   # $$ \$$$  $$ |$$  __$$ |  $$ |  $$ \$$$$ |
+   # $$ |\$  /$$ |$$ |  $$ |  $$ |  $$ |\$$$ |
+   # $$ | \_/ $$ |$$ |  $$ |$$$$$$\ $$ | \$$ |
+   # \__|     \__|\__|  \__|\______|\__|  \__|
+
+
+
+
+# construct config file path
+CONFIG_FILE=$(dirname "$dir")/config.ini
+
+# Check if config.ini file exists
+if ! [ -f "$CONFIG_FILE" ]; then printf "\e[91mERROR : Fichier [config.ini] introuvable\e[0m \n" $0 ; exit 0 ; fi
+
+ROUTER_IP=$(awk -F '=' '/ROUTER_IP/ {print $2}' $CONFIG_FILE | tr -d '\r')
+ROUTER_USERNAME=$(awk -F "=" '/ROUTER_USERNAME/ {print $2}' $CONFIG_FILE | tr -d '\r')
+ROUTER_PASSWORD=$(awk -F "=" '/ROUTER_PASSWORD/ {print $2}' $CONFIG_FILE | tr -d '\r')
+
+TMP_HEADER_FILE=/tmp/headers.tmp
+
+CURL_OPT=--silent
+
 
 usage="Usage: manage_sms.sh <command> \n\n Commands:\tget-count [Unread,Inbox,Outbox]\n \t\tget-sms [1=reçus (par defaut), 2=envoyés]\n \t\tread-all \n \t\tdelete-all [1=reçus (par defaut), 2=envoyés]\n \t\tget-wifi \n \t\tactivate-wifi \n \t\tdeactivate-wifi \n \t\tsend-sms <Message> <Numero> \n"
 
