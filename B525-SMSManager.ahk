@@ -206,13 +206,17 @@ runShellCmd(option){
 	Global scriptPath
 	cmd := ComSpec . " /c bash.exe /mnt/" . scriptPath . "/scripts/manage_sms.sh " . option
 	objOut := % StdOutStream(cmd)
-
-; Cas spécial où il y a une erreur de mot de passe, quitte l'application immédiatement
-	if(InStr(objOut,"PASSWORD")){
-		noticeText = Le mot de passe configuré est incorrect.`nVeuillez vérifier le fichier "config.ini" `Le compte est peut-être aussi vérrouillé suite à de trop nombreuses tentatives incorrectes... 
-		TrayTip, Box 4G : Erreur, % noticeText
-		Sleep 1000
-		Link()
+; Gestion des erreurs
+	if(InStr(objOut,"ERROR")){
+		objOut := RegExReplace(objOut, ".\[91mERROR : ", "> ")
+		objOut := RegExReplace(objOut, ".\[0m")
+		errorText = Une erreur est survenue : `n`n%objOut%
+	; Cas spécial où il y a une erreur de mot de passe, quitte l'application immédiatement
+		if(InStr(objOut,"PASSWORD")){
+			errorText = Le mot de passe configuré est incorrect !`n`nVeuillez vérifier le fichier "config.ini" `n `nNB : Le compte est peut-être aussi verrouillé suite à de trop nombreuses tentatives incorrectes... 
+		}
+		errorText = %errorText% `n`nL'éxécution du programme est annulée.
+		MsgBox, 48, ERREUR ! , %errorText%
 		ExitApp
 	}
 	return objOut
