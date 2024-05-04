@@ -58,7 +58,9 @@ Une fois le logiciel en cours d'exécution, une icône s'affiche au niveau de la
 
 * **Un clic-droit** sur l'icone affiche un menu contextuel permettant de quitter l'appli, actualiser le statut, ou encore afficher l'interface d'envoi de SMS\
 <img src="https://routeur4g.fr/discussions/uploads/editor/fl/9vyzxgu0kjx6.png"/>
+
 * **Une nouvelle fonctionnalité (02/2024)** permets désormais d'activer ou désactiver le wifi, directement depuis le menu de la zone de notification ou sur un bouton dans l'interface du gestionnaire.
+  
 * * **Une nouvelle fonctionnalité (05/2024)** permets désormais d'ouvrir directement le fichier "config.ini"depuis le menu de la zone de notification ou sur un bouton dans l'interface du gestionnaire.
 ![menu barre des taches](https://github.com/jibap/B525-SMSManager/assets/3915029/da5b7ce3-4195-4044-b4ff-62b113e1df41)
 
