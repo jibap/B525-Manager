@@ -2,7 +2,7 @@
 # Written by oga83, custom by Jibap
 
 # construct config file path
-CONFIG_FILE=$(dirname "$dir")/config.ini
+CONFIG_FILE=../config.ini
 
 ROUTER_IP=$(awk -F '=' '/ROUTER_IP/ {print $2}' $CONFIG_FILE | tr -d '\r')
 ROUTER_USERNAME=$(awk -F "=" '/ROUTER_USERNAME/ {print $2}' $CONFIG_FILE | tr -d '\r')
