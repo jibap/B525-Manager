@@ -4,7 +4,7 @@
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 
-OnMessage(0x404, Func("AHK_NOTIFYICON")) ; CLIC sur la notif pour ouvrir la GUI
+OnMessage(0x404, Func("clicOnNotif")) ; CLIC sur la notif pour ouvrir la GUI
 
 ; IMPORT / EXPORT des fichiers annexes pour version compilée
 FileCreateDir,  medias
@@ -382,8 +382,7 @@ SetButtonIcon(hButton, File, Index, Size := 16) {
 }
 
 ; Fonction qui permets de cliquer sur la notif Windows pour ouvrir la GUI
-AHK_NOTIFYICON(wParam, lParam, msg, hwnd)
-{
+clicOnNotif(wParam, lParam, msg, hwnd){
 	if (hwnd != A_ScriptHwnd)
 		return
 	if (lParam = 1029)
@@ -411,6 +410,7 @@ clearGUI(){
 }
 
 createSmsList(boxType){
+		Global MyGuiHwnd
 		SMSList = % getSmsList(boxType)
 		messagesNodes = % convertXMLtoArray(SMSList, "//response/Messages/Message")
 		messages := messagesNodes.item(0)
@@ -432,8 +432,9 @@ createSmsList(boxType){
 					}else{
 						contentMessageTT = % contentMessage
 					}
-					if !guiIsActive(){						
-						; affichage d'une notification pour chaque message
+					
+					if ! WinExist("ahk_id " MyGuiHwnd){	
+						; affichage d'une notification pour chaque message si interface non affichée
 						TrayTip, SMS Box4G : %phoneNumber%, %contentMessageTT%	
 					}
 			}
