@@ -15,7 +15,7 @@ Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant [la vers
 L'application fonctionne comme un logiciel portable, une fois les fichiers récupérés, il faut donc les placer à un endroit de votre arborescence où il pourront rester sans déranger (pas dans le dossier des téléchargements quoi !!!) 
 
 * <ins>Si vous n'avez pas le logiciel AHK installé</ins> : téléchargez et exécutez le [B525-SMSmanager.exe](https://github.com/jibap/B525-SMSManager/blob/main/B525-SMSManager.exe) qui fera une extraction des fichiers annexes (script powershell, icones, config)
-* <ins>Si vous utilisez déjà AHK</ins> (ou que vous préférez ne pas utiliser le .exe proposé) : téléchargez l'archive du dépot (Code/Download ZIP), dézipper pui supprimez le .exe,  **renomez le fichier config_sample.ini en config.ini** et après avoir correctement complété ce dernier, éxécutez le B525-SMSManager.ahk pour le lancer. 
+* <ins>Si vous utilisez déjà AHK</ins> (ou que vous préférez ne pas utiliser le .exe proposé) : téléchargez [l'archive du dépot](https://github.com/jibap/B525-SMSManager/archive/refs/heads/main.zip), dézipper (supprimez le .exe si vous voulez avant),  **renomez le fichier config_sample.ini en config.ini** et après avoir correctement complété ce dernier, éxécutez le B525-SMSManager.ahk pour le lancer. 
 
 > Pour que l'application se lance au démarrage de l'ordi, pensez à la rajouter en tâche planifiée ou au dossier "Démarrage" de Windows (shell:startup)
 
