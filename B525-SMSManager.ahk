@@ -1,6 +1,7 @@
 Persistent 
 #Warn
 #SingleInstance force ; Force erase previous instance
+OnExit(ExitAppli)
 
 
 DllCall("AllocConsole")
@@ -80,7 +81,6 @@ IL_Add(ImageListID, "shell32.dll", unreadIconID)
 
 ; Ouverture du powershell permanent
 psShell := ComObject("WScript.Shell").Exec("powershell -ExecutionPolicy Bypass -command -")
-OnExit(ClosePS)  ; Exécute ClosePS() quand le script se ferme
 
 ; Initialisation personnalisée, le cas échéant, des variables globales
 ipRouter := IniRead("config.ini", "main", "ROUTER_IP")
@@ -341,6 +341,7 @@ openSettings(*){
 }
 
 ExitAppli(*){
+	ClosePS()
 	ExitApp()
 }
 
