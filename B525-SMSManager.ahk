@@ -13,6 +13,7 @@ SetWorkingDir(A_ScriptDir)  ; Ensures a consistent starting directory.
 OnMessage(0x404, clicOnNotif) ; CLIC sur la notif pour ouvrir la GUI
 OnMessage(0x404, OnTrayClick) ; Capture les événements liés au Tray
 
+psShell := "" ; Initialisation de la variable globale pour eviter erreur onExit()
 
 ; IMPORT / EXPORT des fichiers annexes pour version compilée
 DirCreate("medias")
@@ -284,9 +285,17 @@ SendToPS(command) {
 ClosePS(*) {  ; Fonction pour fermer proprement le PowerShell
     global psShell
     if (psShell) {
-        psShell.StdIn.WriteLine("exit")  ; Ferme la session PowerShell
-        psShell.Terminate()
-        psShell := ""  ; Libère l'objet
+		try {
+			psShell.StdIn.WriteLine("exit")  ; Ferme la session PowerShell
+		} catch {
+			; Ignore l'erreur si PS est déjà en train de se fermer
+		}
+		try {
+			psShell.Terminate()
+		} catch {
+			; Ignore si déjà fermé
+		}
+		psShell := ""  ; Libère l'objet
     }
 }
 
