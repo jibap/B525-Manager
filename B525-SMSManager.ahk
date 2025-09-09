@@ -107,10 +107,10 @@ trayMenu.add()
 trayMenu.add("Paramètres", openSettings)
 trayMenu.add()
 trayMenu.add("Ouvrir la page Web", openWebPage)
-trayMenu.add("Ouvrir l'interface", OpenListSMSGUI)
+trayMenu.add("Ouvrir l'interface (double clic)", OpenListSMSGUI)
 trayMenu.add()
-trayMenu.add("Actualiser", refresh)
-trayMenu.Default := "Ouvrir l'interface"
+trayMenu.add("Actualiser (clic droit)", refresh)
+trayMenu.Default := "Ouvrir l'interface (double clic)"
 
 trayMenu.SetIcon("1&", "shell32.dll", quitIconID)
 trayMenu.SetIcon("3&", "ddores.dll", enableWifiIconID)
@@ -134,9 +134,10 @@ ListSMSGUI.Title := "B525-Manager"
 
 ; Top Buttons
 RefreshButton := ListSMSGUI.Add("Button", "x10 y8 w100 r2", A_Space . "Actualiser")
-ReadAllButton := ListSMSGUI.Add("Button", "x120 y8 w150 r2 Disabled", A_Space . "Marquer comme lu")
-DeleteAllButton := ListSMSGUI.Add("Button", "x280 y8 w150 r2 Disabled", A_Space . "Supprimer")
-openSettingsButton := ListSMSGUI.Add("Button", "x675 y8 w35 r2", A_Space)
+ReadAllButton := ListSMSGUI.Add("Button", "x+5 y8 w200 r2 Disabled", A_Space . "Tout marquer comme lu")
+DeleteAllButton := ListSMSGUI.Add("Button", "x+5 y8 w150 r2 Disabled", A_Space . "Tout supprimer")
+TextInfo := ListSMSGUI.Add("Text", "x+5 y20 w195 h20", "")
+openSettingsButton := ListSMSGUI.Add("Button", "x+5 y8 w35 r2", A_Space)
 
 ; List View
 LV_SMS := ListSMSGUI.Add("ListView", "section xs R10 w700  Grid AltSubmit -Hdr", ["", "contactName", "Time", "Message", "Index", "boxType", "phoneNumber"])
@@ -150,10 +151,10 @@ ListSMSGUI.Add("Picture", "section xs " . messageIconID . " w16 h16", "shell32.d
 FullMessageEdit := ListSMSGUI.Add("Edit", "ReadOnly ys w670 h50 ", helpText)
 
 ; Bottom buttons
-openWebPageButton := ListSMSGUI.Add("Button", "section xs   w150 r2", A_Space . "Page Web de la box 4G")
-SwitchWifiButton := ListSMSGUI.Add("Button", "ys  x200 w140 r2", A_Space . "Activer le Wifi")
-SendSMSButton := ListSMSGUI.Add("Button", "ys  x380 w140 r2", A_Space . "Envoyer un SMS")
-HideGUIButton := ListSMSGUI.Add("Button", "ys  x560 w150 r2", "Cacher la fenêtre")
+openWebPageButton := ListSMSGUI.Add("Button", "section xs w150 r2", A_Space . "Page Web de la box 4G")
+SwitchWifiButton := ListSMSGUI.Add("Button", "ys x+40 w140 r2", A_Space . "Activer le Wifi")
+SendSMSButton := ListSMSGUI.Add("Button", "ys x+40 w140 r2", A_Space . "Envoyer un SMS")
+HideGUIButton := ListSMSGUI.Add("Button", "ys x+40 w150 r2", "Cacher la fenêtre")
 
 ; BUTTONS ICONS
 SetButtonIcon(RefreshButton, "shell32.dll", refreshIconID, 20)
@@ -256,13 +257,30 @@ SendSMSGUI.OnEvent("Escape", SendSMSGUIGuiClose)
 ; #      #   #  #   #  #   #    #      #    #   #  #   #  #   #
 ; #       ###   #   #   ###     #     ###    ###   #   #   ###
 
-
+lastClickTime := 0  ; variable globale
 
 OnTrayClick(wParam, lParam, msg, hwnd) {
-   	; 0x201 = clic gauche, 0x204 = clic droit
-    if (lParam = 0x201) {
-        refresh()
-    } 
+    global lastClickTime, trayMenu
+
+    switch lParam {
+        case 0x201: ; clic gauche
+            now := A_TickCount
+            if (now - lastClickTime < 400) {
+                ; double clic
+                ListSMSGUIOpen()
+                lastClickTime := 0
+                return
+            }
+            lastClickTime := now
+            ; simple clic → affiche le menu
+            trayMenu.Show()
+
+        case 0x204:
+		case 0x205: ; clic droit down / up
+            refresh()
+
+            return true
+    }
 }
 
 ; POWERSHELL FUNCTIONS
@@ -461,13 +479,18 @@ refreshWifiStatus(force){
 	trayMenu.Rename("3&", wifiLabelCmd)
 }
 
+GetXMLValue(xml, pattern, default := 0) {
+    local node
+    return RegExMatch(xml, pattern, &node) ? node.1 : default
+}
+
 refresh(*){
 	Global data
 	Global wifiStatus
 	Global lastIcon
 	Global refreshing
 
-	; Prevent refresh is yet in usage
+	; Prevent refresh in use
 	if(refreshing){
 		return
 	}
@@ -487,93 +510,94 @@ refresh(*){
 
 	; NETWORK IS OK => GO REFRESH
 	refreshing := true
+	quiet := !guiIsActive()
+
 	RefreshButton.Enabled := false
 	DeleteAllButton.Enabled := false
 	ReadAllButton.Enabled := false
 
-	quiet := !guiIsActive()
-
 	setTrayIcon("load")
+	
 	if(!quiet){
-		SplashTextGui := Gui("ToolWindow -Sysmenu Disabled", "BOX 4G"), SplashTextGui.Add("Text",, "Actualisation, merci de patienter..."), SplashTextGui.Show("w300 h40")
+		TextInfo.Value := "Actualisation, merci de patienter..."
 	}
+	
+	
+	try {
+		; Récupération de tous les comptes de la boite et du statut du wifi
+		SMSCountsXML := runBoxCmd("get-count All")
 
-	; Récupération de tous les comptes de la boite et du statut du wifi
-	SMSCountsXML := runBoxCmd("get-count All")
+		wifiStatus := GetXMLValue(SMSCountsXML, "<wifiStatus>(\d+)</wifiStatus>")
+		data.unreadSMSCount := GetXMLValue(SMSCountsXML, "<LocalUnread>(\d+)</LocalUnread>")
+		data.inboxSMSCount := GetXMLValue(SMSCountsXML, "<LocalInbox>(\d+)</LocalInbox>")
+		data.outboxSMSCount := GetXMLValue(SMSCountsXML, "<LocalOutbox>(\d+)</LocalOutbox>")
+		
+		refreshWifiStatus(False)
 
-	RegExMatch(SMSCountsXML, "<wifiStatus>(\d+)</wifiStatus>", &wifiStatusNode)
-	wifiStatus := wifiStatusNode.1
-	RegExMatch(SMSCountsXML, "<LocalUnread>(\d+)</LocalUnread>", &unreadSMSCountNode)
-	data.unreadSMSCount := unreadSMSCountNode.1
-	RegExMatch(SMSCountsXML, "<LocalInbox>(\d+)</LocalInbox>", &inboxSMSCountNode)
-	data.inboxSMSCount := inboxSMSCountNode.1
-	RegExMatch(SMSCountsXML, "<LocalOutbox>(\d+)</LocalOutbox>", &outboxSMSCountNode)
-	data.outboxSMSCount := outboxSMSCountNode.1 
+		; INBOX
+		if(data.inboxSMSCount > 0){
+			inboxSMSXML := runBoxCmd("get-sms 1") 
+			inboxSMSNodes := convertXMLtoArray(inboxSMSXML, "//response/Messages/Message")
+			data.inboxSMSList := inboxSMSNodes
+		}
+		; OUTBOX
+		if(data.outboxSMSCount > 0){
+			outboxSMSXML := runBoxCmd("get-sms 2")
+			outboxSMSNodes := convertXMLtoArray(outboxSMSXML, "//response/Messages/Message")
+			data.outboxSMSList := outboxSMSNodes
+		}		
+		
+	} finally {
+		tooltipUnread := ""
+		if(data.inboxSMSCount > 0 || data.outboxSMSCount > 0){
+			DeleteAllButton.Enabled := True
 
-	refreshWifiStatus(False)
-
-	; INBOX
-	if(data.inboxSMSCount > 0){
-		inboxSMSXML := runBoxCmd("get-sms 1") 
-		inboxSMSNodes := convertXMLtoArray(inboxSMSXML, "//response/Messages/Message")
-		data.inboxSMSList := inboxSMSNodes
-	}
-	; OUTBOX
-	if(data.outboxSMSCount > 0){
-		outboxSMSXML := runBoxCmd("get-sms 2")
-		outboxSMSNodes := convertXMLtoArray(outboxSMSXML, "//response/Messages/Message")
-	 	data.outboxSMSList := outboxSMSNodes
-	}
-
-	if(data.inboxSMSCount > 0 || data.outboxSMSCount > 0){
-		DeleteAllButton.Enabled := True
-
-		; TOOLTIP UPDATE
-		If (data.unreadSMSCount > 0){
-			ReadAllButton.Enabled := True
-			; Modification du tooltip - pluriel - en fonction du nombre
-			if(data.unreadSMSCount = 1){
-				tooltipTitle := "1 nouveau message"
-			}else{
-				tooltipTitle := data.unreadSMSCount . " nouveaux messages"
+			; TOOLTIP UPDATE
+			If (data.unreadSMSCount > 0){
+				tooltipUnread := " ⭐ " data.unreadSMSCount " non lu" (data.unreadSMSCount > 1 ? "s" : "")
+				ReadAllButton.Enabled := True
+				; actualisation de l'icone BEFORE createSmSlist() TO HAVE GOOD ICON
+				lastIcon := "more"
+				setTrayIcon(lastIcon)
 			}
-			; actualisation de l'icone BEFORE createSmSlist() TO HAVE GOOD ICON
-			lastIcon := "more"
+
+			; Création de la liste
+			if(data.inboxSMSCount > 0){
+				createSmsList(1,data.inboxSMSList)
+			}
+			if(data.outboxSMSCount > 0){
+				createSmsList(2,data.outboxSMSList)
+			}
+		}
+
+		; actualisation de l'infobulle de l'icone
+		A_IconTip := data.inboxSMSCount " reçu" (data.inboxSMSCount > 1 ? "s" : "")  tooltipUnread "`n" data.outboxSMSCount " envoyé" (data.outboxSMSCount > 1 ? "s" : "")
+
+
+		; Auto-size
+		LV_SMS.ModifyCol()
+		; Sort by Date  
+		LV_SMS.ModifyCol(3, "SortDesc")
+		LV_SMS.ModifyCol(5, 0)
+		LV_SMS.ModifyCol(6, 0)
+		LV_SMS.ModifyCol(7, 0)
+
+		; désélectionner toutes les lignes
+		LV_SMS.Modify(0, "-Select")  
+
+		RefreshButton.Enabled := true
+		
+		; If lastIcon has not changed 
+		if(lastIcon != "more"){
+			lastIcon := "noSMS"
 			setTrayIcon(lastIcon)
 		}
-
-		; Création de la liste
-		if(data.inboxSMSCount > 0){
-			createSmsList(1,data.inboxSMSList)
+		if(!quiet){
+			TextInfo.Value := ""
 		}
-		if(data.outboxSMSCount > 0){
-			createSmsList(2,data.outboxSMSList)
-		}
+		checkForWifiAutoOff()
+		refreshing := false
 	}
-	; If lastIcon has not changed 
-	if(lastIcon != "more"){
-		lastIcon := "noSMS"
-		setTrayIcon(lastIcon)
-	}
-
-	; actualisation de l'infobulle de l'icone
-	A_IconTip := tooltipTitle " `n " data.inboxSMSCount " reçu(s) `n " data.outboxSMSCount " envoyé(s)"
-
-	; Auto-size
-	LV_SMS.ModifyCol()
-	; Sort by Date  
-	LV_SMS.ModifyCol(3, "SortDesc")
-	LV_SMS.ModifyCol(5, 0)
-	LV_SMS.ModifyCol(6, 0)
-	LV_SMS.ModifyCol(7, 0)
-
-	if(!quiet){
-		SplashTextGui.Destroy()
-	}
-
-	checkForWifiAutoOff()
-	RefreshButton.Enabled := true
-	refreshing := false
 }
 
 SwitchWifi(*){
@@ -670,10 +694,17 @@ ListSMSRightClick(LV_SMS, SelectedRowNumber, *){
 	}
 	if (SelectedRowNumber > 0){
 		SMSType := LV_SMS.GetText(SelectedRowNumber,6)
-		if(SMSType != 3 ){
-			ListSMS_RCMenu.Disable("Marquer comme lu")
-		}else{
+		; Adaptation du menu en fonction du type de message
+		; 1 = inbox, 2 = outbox, 3 = inbox unread
+		if(SMSType == 3 ){
 			ListSMS_RCMenu.Enable("Marquer comme lu")
+		}else{
+			ListSMS_RCMenu.Disable("Marquer comme lu")
+		}
+		if(SMSType == 2 ){
+			ListSMS_RCMenu.Disable("Répondre")
+		}else{
+			ListSMS_RCMenu.Enable("Répondre")
 		}
 		ListSMS_RCMenu.Show()
 	}
@@ -681,6 +712,13 @@ ListSMSRightClick(LV_SMS, SelectedRowNumber, *){
 
 ListSMSClick(LV_SMS, SelectedRowNumber){
 	selectedRowsCount := LV_SMS.GetCount("S")
+	if(selectedRowsCount > 0){
+		DeleteAllButton.Text := "Supprimer la sélection"
+		ReadAllButton.Text := "Marquer la sélection comme lue"
+	}else{
+		DeleteAllButton.Text := "Tout supprimer"
+		ReadAllButton.Text := "Tout marquer comme lu"
+	}
 	if (selectedRowsCount != 1){
 		clearFullSMS()
 	}
@@ -699,6 +737,7 @@ ListSMSClick(LV_SMS, SelectedRowNumber){
 }
 
 reply(*){
+	tagSMSAsRead()
 	SelectedRowNumber := LV_SMS.GetNext(0,"F")  ; Find the focused row. 
 	if(contactsList.Length){
 		DDLContactChoice.Enabled := False
@@ -736,7 +775,7 @@ deleteSMS(*){
 
 	if (msgResult = "OK")
 	{
-		SplashTextGui := Gui("ToolWindow -Sysmenu Disabled", "BOX 4G : SMS"), SplashTextGui.Add("Text",, "Suppression en cours..."), SplashTextGui.Show("w200 h50")
+		TextInfo.Value := "Suppression en cours..."
 		if(listOfIndex.length = 0){
 			runBoxCmd("delete-all")
 		}else{
@@ -745,7 +784,7 @@ deleteSMS(*){
 				runBoxCmd("delete-sms " listOfIndex[A_Index])
 			}
 		}
-		SplashTextGui.Destroy()
+		TextInfo.Value := ""
 		refresh()
 	}
 }
@@ -768,7 +807,7 @@ tagSMSAsRead(*){
 		}
 	}
 
-	SplashTextGui := Gui("ToolWindow -Sysmenu Disabled", "BOX 4G : SMS"), SplashTextGui.Add("Text",, "Marquage en cours..."), SplashTextGui.Show("w200 h50")
+	TextInfo.Value := "Marquage en cours..."
 	if(selectedRowsCount = 0){
 		runBoxCmd("read-all")
 	}else{
@@ -777,7 +816,7 @@ tagSMSAsRead(*){
 			runBoxCmd("read-sms " listOfIndex[A_Index])
 		}
 	}
-	SplashTextGui.Destroy()
+	TextInfo.Value := ""
 	refresh()
 }
 
@@ -851,12 +890,12 @@ SendSMSGUIButtonEnvoi(*){
 		FileAppend messageToDest.Text, tempFile, "`n UTF-8"
 		sendReturn := runBoxCmd("send-sms `"" tempFile "`" `"" numberDest.Text "`"")
 		if(InStr(sendReturn, "<response>OK</response>")){
-			SplashTextGui := Gui("ToolWindow -Sysmenu Disabled", "BOX 4G : SMS"), SplashTextGui.Add("Text",, "Le message a bien été envoyé !"), SplashTextGui.Show("w200 h50")
-			Sleep(2000)
-			SplashTextGui.Destroy()
 			messageToDest.Text := ""
 			SendSMSGUI.Hide()
+			TextInfo.Value := "Le message a bien été envoyé !"
+			Sleep(2000)
 			refresh()
+			TextInfo.Value := ""
 		}else{
 			MsgBox("Le message n'a pas pu être envoyé. `n Veuillez vérifier votre saisie...", "ERREUR", 48)
 			SendSMSGUI.Show()
