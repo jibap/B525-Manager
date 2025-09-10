@@ -9,7 +9,7 @@ J'ai cherché en vain une petite appli facile à mettre en oeuvre qui permettrai
 Je l'ai donc crée avec **AutoHotKey et Bash** en partant du travail de **oga83** du forum https://routeur4g.fr/, puis comme le bash ne peut s'éxécuter sur Windows de façon silencieuse, j'ai finalement réécrit le script en **Powershell**, qui cette fois ne s'accapare pas le focus.
 
 #### AutoHotkey ?
-Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant [la version compilée (.exe)](https://github.com/jibap/B525-SMSManager/blob/main/B525-SMSManager.exe), sinon vous devrez installer le logiciel : [https://www.autohotkey.com/download/ahk-install.exe](https://www.autohotkey.com/download/ahk-v2.exe) (NB: script écrit en V2 donc ne fonctionne pas en V1)
+Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant [la version compilée (.exe)](https://github.com/jibap/B525-SMSManager/releases/latest), sinon vous devrez installer le logiciel : [https://www.autohotkey.com/download/ahk-install.exe](https://www.autohotkey.com/download/ahk-v2.exe) (NB: script écrit en V2 donc ne fonctionne pas en V1)
 
 ## Mise en oeuvre
 L'application fonctionne comme un logiciel portable, une fois les fichiers récupérés, il faut donc les placer à un endroit de votre arborescence où il pourront rester sans déranger (pas dans le dossier des téléchargements quoi !!!) 
