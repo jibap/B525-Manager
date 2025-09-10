@@ -91,6 +91,8 @@ if(!ipRouter || !ValidIP(ipRouter)){
 loopDelay := IniRead("config.ini", "main", "DELAY")
 if(!loopDelay || !RegExMatch(loopDelay, "^\d+$")){
 	loopDelay := "300000" ; Default Loop delay for check
+}else{
+	loopDelay := loopDelay * 1000
 }
 
 setTrayIcon("noSMS")
