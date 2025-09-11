@@ -112,7 +112,7 @@ trayMenu.add("Activer le Wifi", SwitchWifi)
 trayMenu.add("Envoyer un SMS", SendSMSGUIShow)
 trayMenu.add()
 trayMenu.add("Paramètres", openSettings)
-trayMenu.add("Mettre à jour (actuel : " currentVersion ")", checkForUpdate)
+trayMenu.add("Vérifier la mise à jour", checkForUpdate)
 trayMenu.add()
 trayMenu.add("Ouvrir la page Web", openWebPage)
 trayMenu.add("Ouvrir l'interface (double clic)", OpenListSMSGUI)
@@ -949,7 +949,7 @@ checkForUpdate(*){
 			ExitApp()	
 		}
 	} else {
-		MsgBox "Déjà à jour (" currentVersion ")."
+		MsgBox "La version actuelle est la dernière (" currentVersion ")."
 	}
 }
 
