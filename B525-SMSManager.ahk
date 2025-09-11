@@ -959,7 +959,7 @@ checkForUpdate(*){
 			ExitApp()	
 		}
 	} else {
-		MsgBox "La version actuelle est la dernière (" currentVersion ")."
+		MsgBox "La version actuelle est la dernière (" currentVersion ").", "Mise à jour"
 	}
 }
 
