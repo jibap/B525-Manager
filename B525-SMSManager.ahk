@@ -21,11 +21,16 @@ FileInstall("medias\noSMS.ico", "medias\noSMS.ico", 1)
 FileInstall("medias\more.ico", "medias\more.ico", 1)
 FileInstall("medias\load.ico", "medias\load.ico", 1)
 FileInstall("medias\net.ico", "medias\net.ico", 1)
+
 FileInstall("manage_sms.ps1", "manage_sms.ps1", 1)
+FileInstall("version.txt", "version.txt", 1)
+FileInstall("updater.cmd", "updater.cmd", 1)
+
 if !FileExist("config.ini") {
 	FileInstall("config_sample.ini", "config.ini")
 }
 
+#Include "version.txt"
 
 
   ; ###   #   #   ###   #####
@@ -107,6 +112,7 @@ trayMenu.add("Activer le Wifi", SwitchWifi)
 trayMenu.add("Envoyer un SMS", SendSMSGUIShow)
 trayMenu.add()
 trayMenu.add("Paramètres", openSettings)
+trayMenu.add("Mettre à jour (actuel : " currentVersion ")", checkForUpdate)
 trayMenu.add()
 trayMenu.add("Ouvrir la page Web", openWebPage)
 trayMenu.add("Ouvrir l'interface (double clic)", OpenListSMSGUI)
@@ -118,8 +124,8 @@ trayMenu.SetIcon("1&", "shell32.dll", quitIconID)
 trayMenu.SetIcon("3&", "ddores.dll", enableWifiIconID)
 trayMenu.SetIcon("4&", "shell32.dll", sendSMSIconID)
 trayMenu.SetIcon("6&", "shell32.dll", settingsIconID)
-trayMenu.SetIcon("8&", "shell32.dll", openWebPageIconID)
-trayMenu.SetIcon("11&", "shell32.dll", refreshIconID)
+trayMenu.SetIcon("9&", "shell32.dll", openWebPageIconID)
+trayMenu.SetIcon("12&", "shell32.dll", refreshIconID)
 
 
 ; #      #            #        ##   #  #   ##  			  ##   #  #  ###
@@ -132,7 +138,7 @@ trayMenu.SetIcon("11&", "shell32.dll", refreshIconID)
 ; CREATION DE LA GUI PRINCIPALE (LIST SMS)
 ; ****************************************
 ListSMSGUI := Gui("")
-ListSMSGUI.Title := "B525-Manager"
+ListSMSGUI.Title := "B525-Manager  [" currentVersion "]"
 
 ; Top Buttons
 RefreshButton := ListSMSGUI.Add("Button", "x10 y8 w100 r2", A_Space . "Actualiser")
@@ -146,17 +152,17 @@ LV_SMS := ListSMSGUI.Add("ListView", "section xs R10 w700  Grid AltSubmit -Hdr",
 
 ; SMS Details
 ListSMSGUI.Add("Picture", "section " . numeroIconID . " w16 h16", "shell32.dll")
-FullNumeroEdit := ListSMSGUI.Add("Edit", "ReadOnly ys w150 h20")
-ListSMSGUI.Add("Picture", "ys " . dateIconID . " w16 h16", "shell32.dll")
-FullDateText := ListSMSGUI.Add("Text", "ys w200 h20 vFullDate")
+FullNumeroEdit := ListSMSGUI.Add("Edit", "ReadOnly x+5 w150 h20")
+ListSMSGUI.Add("Picture", "x+5 " . dateIconID . " w16 h16", "shell32.dll")
+FullDateText := ListSMSGUI.Add("Text", "x+5 w200 h20 vFullDate")
 ListSMSGUI.Add("Picture", "section xs " . messageIconID . " w16 h16", "shell32.dll")
-FullMessageEdit := ListSMSGUI.Add("Edit", "ReadOnly ys w670 h50 ", helpText)
+FullMessageEdit := ListSMSGUI.Add("Edit", "ReadOnly x+5 w670 h50 ", helpText)
 
 ; Bottom buttons
 openWebPageButton := ListSMSGUI.Add("Button", "section xs w150 r2", A_Space . "Page Web de la box 4G")
-SwitchWifiButton := ListSMSGUI.Add("Button", "ys x+40 w140 r2", A_Space . "Activer le Wifi")
-SendSMSButton := ListSMSGUI.Add("Button", "ys x+40 w140 r2", A_Space . "Envoyer un SMS")
-HideGUIButton := ListSMSGUI.Add("Button", "ys x+40 w150 r2", "Cacher la fenêtre")
+SwitchWifiButton := ListSMSGUI.Add("Button", "x+40 w140 r2", A_Space . "Activer le Wifi")
+SendSMSButton := ListSMSGUI.Add("Button", "x+40 w140 r2", A_Space . "Envoyer un SMS")
+HideGUIButton := ListSMSGUI.Add("Button", "x+40 w150 r2", "Cacher la fenêtre")
 
 ; BUTTONS ICONS
 SetButtonIcon(RefreshButton, "shell32.dll", refreshIconID, 20)
@@ -259,11 +265,11 @@ SendSMSGUI.OnEvent("Escape", SendSMSGUIGuiClose)
 ; #      #   #  #   #  #   #    #      #    #   #  #   #  #   #
 ; #       ###   #   #   ###     #     ###    ###   #   #   ###
 
-lastClickTime := 0  ; variable globale
+lastClickTime := 0
 
 OnTrayClick(wParam, lParam, msg, hwnd) {
-    global lastClickTime, trayMenu
-
+	global trayMenu, lastClickTime
+	
     switch lParam {
         case 0x201: ; clic gauche
             now := A_TickCount
@@ -273,16 +279,21 @@ OnTrayClick(wParam, lParam, msg, hwnd) {
                 lastClickTime := 0
                 return
             }
-            lastClickTime := now
-            ; simple clic → affiche le menu
-            trayMenu.Show()
-
+			lastClickTime := now
+			SetTimer(WaitForDoubleClick, -400)
         case 0x204:
-		case 0x205: ; clic droit down / up
+		case 0x205: ; clic droit up
             refresh()
-
             return true
     }
+}
+
+WaitForDoubleClick(*){
+	global trayMenu, lastClickTime
+	if(!guiIsActive() || lastClickTime == 0){
+		trayMenu.Show()
+		lastClickTime := 0
+	}
 }
 
 ; POWERSHELL FUNCTIONS
@@ -902,6 +913,43 @@ SendSMSGUIButtonEnvoi(*){
 			MsgBox("Le message n'a pas pu être envoyé. `n Veuillez vérifier votre saisie...", "ERREUR", 48)
 			SendSMSGUI.Show()
 		}
+	}
+}
+
+checkForUpdate(*){
+	global currentVersion
+	; Crée et configure l'objet HTTP
+	http := ComObject("WinHttp.WinHttpRequest.5.1")
+	http.Open("GET", "https://api.github.com/repos/jibap/B525-SMSManager/releases/latest", true)
+	http.Send()
+	http.WaitForResponse()
+
+	json := http.ResponseText
+
+	; --- Extraire la version via Regex ---
+	if RegExMatch(json, '"tag_name"\s*:\s*"([^"]+)"', &m)
+		latestVersion := m[1]
+	else
+		latestVersion := ""
+
+	; --- Comparer ---
+	if (latestVersion != "" && latestVersion != currentVersion) {
+		if MsgBox("Nouvelle version disponible: " latestVersion "`n`nMettre à jour maintenant ?", "Mise à jour", 4) = "Yes" {
+			; --- Extraire l'URL de l'EXE (premier asset) ---
+			if RegExMatch(json, '"browser_download_url"\s*:\s*"([^"]+\.exe)"', &d)
+				downloadURL := d[1]
+			else
+				downloadURL := ""
+			; Run(downloadURL)
+			; Télécharger le fichier
+			tempFile := A_ScriptDir "\B525-SMSManager-Update.exe"
+			Download downloadURL, tempFile
+			MsgBox("Le programme de mise à jour va s'ouvrir. Veuillez suivre les instructions à l'écran. Le programme va maintenant se fermer.", "Mise à jour")
+			Run(A_ScriptDir "\Updater.cmd")
+			ExitApp()	
+		}
+	} else {
+		MsgBox "Déjà à jour (" currentVersion ")."
 	}
 }
 
