@@ -27,7 +27,7 @@ FileInstall("version.txt", "version.txt", 1)
 FileInstall("updater.cmd", "updater.cmd", 1)
 
 if !FileExist("config.ini") {
-	FileInstall("config_sample.ini", "config.ini")
+	FileInstall("config.ini", "config.ini")
 }
 
 #Include "version.txt"
