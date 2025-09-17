@@ -125,7 +125,7 @@ function Login() {
 }
 
 function Logout() {
-    $response = PostRouterData "/api/user/logout" "<request><Logout>1</Logout></request>"
+    [void](PostRouterData "/api/user/logout" "<request><Logout>1</Logout></request>")
 }
 
 function GetCount($boxType) {
@@ -138,7 +138,7 @@ function GetCount($boxType) {
         $nodeWifi = $responseXML.CreateElement("wifiStatus")
         $nodeWifi.InnerText = $wifiStatus
         $parentNode = $responseXML.SelectSingleNode("//response")
-        $addWifi = $parentNode.AppendChild($nodeWifi)
+        $parentNode.AppendChild($nodeWifi)
         $counts = $responseXML.OuterXml
     }
     return $counts
@@ -163,7 +163,7 @@ function TagAllAsRead() {
 }
 
 function TagSmsAsRead($sms_index) {
-   $response = PostRouterData "/api/sms/set-read" "<request><Index>$sms_index</Index></request>" $true
+   PostRouterData "/api/sms/set-read" "<request><Index>$sms_index</Index></request>" $true
 }
 
 function DeleteSmsType($boxType){
@@ -177,7 +177,7 @@ function DeleteSmsType($boxType){
 }
 
 function DeleteSms($sms_index) {
-   $response = PostRouterData "/api/sms/delete-sms" "<request><Index>$sms_index</Index></request>" $true
+   PostRouterData "/api/sms/delete-sms" "<request><Index>$sms_index</Index></request>" $true
 }
 
 function DeleteAll($boxType) {
@@ -203,7 +203,7 @@ function GetWifiStatus() {
 function ChangeWifiStatus($status) {
     if (GetWifiStatus -ne $status) { # Prevent for switching in use
         $data = "<request><radios><radio><wifienable>$status</wifienable><index>0</index><ID>InternetGatewayDevice.X_Config.Wifi.Radio.1.</ID></radio><radio><wifienable>$status</wifienable><index>1</index><ID>InternetGatewayDevice.X_Config.Wifi.Radio.2.</ID></radio></radios><WifiRestart>1</WifiRestart></request>"
-        $response = PostRouterData "/api/wlan/status-switch-settings" $data $true
+        PostRouterData "/api/wlan/status-switch-settings" $data $true
     }
 }
 
