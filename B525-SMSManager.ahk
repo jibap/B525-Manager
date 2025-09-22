@@ -93,12 +93,10 @@ ipRouter := IniRead("config.ini", "main", "ROUTER_IP")
 if (!ipRouter || !ValidIP(ipRouter)) {
     ipRouter := "192.168.8.1" ; Default IP
 }
-loopDelay := IniRead("config.ini", "main", "DELAY")
-if (!loopDelay || !RegExMatch(loopDelay, "^\d+$")) {
-    loopDelay := "300000" ; Default Loop delay for check
-} else {
-    loopDelay := loopDelay * 1000
-}
+
+loopDelay := parseDelay(IniRead("config.ini", "main", "DELAY"))
+
+
 
 setTrayIcon("noSMS")
 
@@ -250,6 +248,26 @@ SendSMSGUI.OnEvent("Escape", SendSMSGUIGuiClose)
 ; ##       ##     ## ##  #### ##          ##     ##  ##     ## ##  ####       ##
 ; ##       ##     ## ##   ### ##    ##    ##     ##  ##     ## ##   ### ##    ##
 ; ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
+
+parseDelay(value) {
+    value := Trim(value)
+    if value {
+        ; Regex avec unité obligatoire (s, m ou h)
+        if RegExMatch(value, "i)^(?<num>\d+)(?<unit>[smh])$", &match) {
+            num := Abs(Integer(match.num))
+            unit := StrLower(match.unit)
+
+            switch unit {
+                case "h": return num * 3600000
+                case "m": return num * 60000
+                case "s": return num * 1000
+            }
+        }
+    }
+    ; remplace si pas d'unité ou valeur invalide par valeur par défaut
+    IniWrite("5m", "config.ini", "main", "DELAY")
+    return 300000
+}
 
 refreshContactsArray() {
     global contactsArray
