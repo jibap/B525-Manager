@@ -47,6 +47,8 @@ lastIcon := "noSMS"
 data := {}
 helpText := "Cliquer sur une ligne pour afficher et pouvoir sélectionner le texte du SMS dans cette zone. Double-Clic pour répondre... "
 refreshing := false
+contactsList := Map()
+contactsArray := Array()
 
 ; ICONS
 validIconID := "301"
@@ -179,7 +181,7 @@ LV_SMS.SetImageList(ImageListID)  ; Assign the above ImageList to the current Li
 
 ; BUTTONS EVENTS 
 RefreshButton.OnEvent("Click", refresh)
-ReadAllButton.OnEvent("Click", tagSMSAsRead)
+ReadAllButton.OnEvent("Click", tagSMSAsReadButtonClick)
 DeleteAllButton.OnEvent("Click", deleteSMS)
 openSettingsButton.OnEvent("Click", openSettings)
 
@@ -201,7 +203,7 @@ ListSMS_RCMenu := Menu()  ; Création du menu contextuel
 ; Ajout des éléments avec leurs fonctions associées
 ListSMS_RCMenu.Add("Répondre", reply)
 ListSMS_RCMenu.Add("Supprimer", deleteSMS)
-ListSMS_RCMenu.Add("Marquer comme lu", tagSMSAsRead)
+ListSMS_RCMenu.Add("Marquer comme lu", tagSMSAsReadButtonClick)
 ListSMS_RCMenu.SetIcon("1&", "shell32.dll", cancelIconID)
 ListSMS_RCMenu.SetIcon("2&", "shell32.dll", deleteIconID)
 ListSMS_RCMenu.SetIcon("3&", "shell32.dll", validIconID)
@@ -225,23 +227,9 @@ SendSMSGUI.Add("Text", , "Message:")
 messageToDest := SendSMSGUI.Add("Edit", "w240 r5 ys")
 SendSMSGUI.Add("Text", "section xs w65", "Destinataire :")
 
-contactsList := Array()
-
-iniList := IniRead("config.ini", "contacts")
-contactsArray := StrSplit(Utf8ToText(iniList),"`n")
-
-; REFORMAT CONTACTS LIST
-if(contactsArray.Length){
-	Loop contactsArray.Length
-	{
-		contactLine := contactsArray[A_Index]
-		egalPos := InStr(contactLine, "=")
-    	contactsList.push(SubStr(contactLine, egalPos + 1) . " (" . SubStr(contactLine, 1, egalPos - 1) . ")") 
-	}
-	DDLContactChoice := SendSMSGUI.Add("DropDownList", "ys w200", contactsList)
-	DDLContactChoice.OnEvent("Change", ChangeContact)
-	SendSMSGUI.Add("Text", "section xs w65", "Numéro :")
-}
+DDLContactChoice := SendSMSGUI.Add("DropDownList", "ys w200")
+DDLContactChoice.OnEvent("Change", ChangeContact)
+SendSMSGUI.Add("Text", "section xs w65", "Numéro :")
 
 numberDest := SendSMSGUI.Add("Edit", "ys w80 Limit10 Number")
 
@@ -265,6 +253,30 @@ SendSMSGUI.OnEvent("Escape", SendSMSGUIGuiClose)
 ; #      #   #  #  ##  #        #      #    #   #  #  ##      #
 ; #      #   #  #   #  #   #    #      #    #   #  #   #  #   #
 ; #       ###   #   #   ###     #     ###    ###   #   #   ###
+
+refreshContactsList(){
+	global contactsList, contactsArray
+	contactsList := Map() ; Reset
+	iniList := IniRead("config.ini", "contacts")
+	contacts := StrSplit(Utf8ToText(iniList),"`n")
+
+    if(contacts.Length){
+        contactsArray := []
+        Loop contacts.Length
+        {
+            contactLine := contacts[A_Index]
+            egalPos := InStr(contactLine, "=")
+            if (egalPos > 0) {
+                num := SubStr(contactLine, 1, egalPos - 1)
+                name := SubStr(contactLine, egalPos + 1)
+                contactsList[num] := name
+                contactsArray.Push(name " (" num ")") ; <-- Respecte l'ordre du INI
+            }
+        }
+        DDLContactChoice.Delete()
+        DDLContactChoice.Add(contactsArray)
+    }
+}
 
 lastClickTime := 0
 
@@ -536,6 +548,7 @@ refresh(*){
 		TextInfo.Value := "Actualisation, merci de patienter..."
 	}
 	
+	refreshContactsList()
 	
 	try {
 		; Récupération de tous les comptes de la boite et du statut du wifi
@@ -669,7 +682,8 @@ createSmsList(boxType, SMSList){
 			phoneNumber := messages.getElementsByTagName( "Phone" ).item[0].text
 			phoneNumber := StrReplace(phoneNumber, "+", "")
 			phoneNumber := StrReplace(phoneNumber, 33, 0)
-			contactName := IniRead("config.ini", "contacts", phoneNumber, phoneNumber)
+			; Recherche du nom dans les contacts
+			contactName := contactsList.Has(phoneNumber) ? contactsList[phoneNumber] : phoneNumber
 			contactName := Utf8ToText(contactName)
 			dateMessage := messages.getElementsByTagName( "Date" ).item[0].text
 			dateMessage := "Le " . SubStr(dateMessage, 1, 10) . "  à  " . SubStr(dateMessage, 12, 19)
@@ -751,13 +765,18 @@ ListSMSClick(LV_SMS, SelectedRowNumber){
 }
 
 reply(*){
-	tagSMSAsRead()
-	SelectedRowNumber := LV_SMS.GetNext(0,"F")  ; Find the focused row. 
-	if(contactsList.Length){
+	tagSMSAsRead(false)
+	; Si des contacts sont configurés, désactivation de la liste des contacts si on répond
+	if(contactsList.Count){
 		DDLContactChoice.Enabled := False
 		DDLContactChoice.Text := ""
 	}
-	numberDest.Text := LV_SMS.GetText(SelectedRowNumber,7)
+	SelectedRowNumber := LV_SMS.GetNext(0,"F")  ; Récupère la ligne sélectionnée
+	if (SelectedRowNumber > 0) {
+		phoneNumber := LV_SMS.GetText(SelectedRowNumber, 7)
+		numberDest.Text := phoneNumber
+		SetDDLContactChoiceByNumber(phoneNumber)
+	}
 	numberDest.Enabled := False
 	SendSMSGUI.Show()
 	messageToDest.focus()
@@ -803,7 +822,11 @@ deleteSMS(*){
 	}
 }
 
-tagSMSAsRead(*){
+tagSMSAsReadButtonClick(*) {
+    tagSMSAsRead(true)
+}
+
+tagSMSAsRead(doRefresh := true){
 	listOfIndex := []
 	selectedRowsCount := LV_SMS.GetCount("S") ; GET CURRENT SELECTED ROWS COUNT
 
@@ -831,7 +854,9 @@ tagSMSAsRead(*){
 		}
 	}
 	TextInfo.Value := ""
-	refresh()
+	if(doRefresh){
+		refresh()
+	}
 }
 
 
@@ -846,7 +871,7 @@ tagSMSAsRead(*){
 
 SendSMSGUIShow(*){	
 	if(boxIsReachable(true)){
-		if(contactsList.Length){
+		if(contactsList.Count){
 			; Force init
 			DDLContactChoice.Enabled := True
 			DDLContactChoice.Value := 1
@@ -863,6 +888,15 @@ SendSMSGUIShow(*){
 ChangeContact(*){
 	contactChoosen := SubStr(DDLContactChoice.Text, InStr(DDLContactChoice.Text, "(") + 1, -1)
 	numberDest.Text := contactChoosen
+}
+
+SetDDLContactChoiceByNumber(phoneNumber) {
+    for idx, item in contactsArray {
+        if InStr(item, "(" phoneNumber ")") {
+            DDLContactChoice.Value := idx
+            return
+        }
+    }
 }
 
 
