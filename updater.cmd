@@ -1,16 +1,15 @@
 @echo off
 chcp 65001 >nul
 REM --- Paramètres ---
-SET PreviousExe="B525-SMSManager.exe"
-SET NewExe="B525-Manager.exe"
-SET UpdateExe="B525-Manager-Update.exe"
+SET LocalExe="B525-Manager.exe"
+SET NewExe="B525-Manager-Update.exe"
 
 SET MAXWAIT=10   
 SET /A COUNT=0
 
 REM --- Vérifier que le nouveau fichier existe ---
-IF NOT EXIST "%UpdateExe%" (
-    echo [ERREUR] Fichier de mise à jour introuvable : "%UpdateExe%"
+IF NOT EXIST "%NewExe%" (
+    echo [ERREUR] Fichier de mise à jour introuvable : "%NewExe%"
     pause
     exit /b 1
 )
@@ -18,7 +17,7 @@ IF NOT EXIST "%UpdateExe%" (
 
 REM --- Attendre que l'ancien exe soit fermé ---
 :Check
-tasklist /FI "IMAGENAME eq %PreviousExe%" | find /I %PreviousExe% >nul
+tasklist /FI "IMAGENAME eq %LocalExe%" | find /I %LocalExe% >nul
 IF %ERRORLEVEL%==0 (
     IF %COUNT% GEQ %MAXWAIT% (
         echo [ERREUR] Le programme ne s'est pas fermé dans le delai imparti.
@@ -31,11 +30,9 @@ IF %ERRORLEVEL%==0 (
 )
 
 REM --- Remplacer l'ancien exe par le nouveau ---
-del /F /Q %PreviousExe%
-del /F /Q "manage_sms.ps1"
-move /Y %UpdateExe% %NewExe%
+move /Y %NewExe% %LocalExe%
 
 REM --- Relancer le programme ---
-start "" %NewExe%
+start "" %LocalExe%
 exit
 
