@@ -21,7 +21,7 @@ FileInstall("medias\more.ico", "medias\more.ico", 1)
 FileInstall("medias\load.ico", "medias\load.ico", 1)
 FileInstall("medias\net.ico", "medias\net.ico", 1)
 
-FileInstall("manage_sms.ps1", "manage_sms.ps1", 1)
+FileInstall("B525-Manager.ps1", "B525-Manager.ps1", 1)
 FileInstall("version.txt", "version.txt", 1)
 FileInstall("updater.cmd", "updater.cmd", 1)
 
@@ -479,7 +479,7 @@ boxIsReachable(ForceTrayTip) {
 }
 
 runBoxCmd(command) {
-    cmd := " " . A_WorkingDir . "\manage_sms.ps1 " . command
+    cmd := " " . A_WorkingDir . "\B525-Manager.ps1 " . command
     result := SendToPS(cmd)
 
     ; Gestion des erreurs
@@ -998,7 +998,7 @@ checkForUpdate(*) {
     global currentVersion
     ; Crée et configure l'objet HTTP
     http := ComObject("WinHttp.WinHttpRequest.5.1")
-    http.Open("GET", "https://api.github.com/repos/jibap/B525-SMSManager/releases/latest", true)
+    http.Open("GET", "https://api.github.com/repos/jibap/B525-Manager/releases/latest", true)
     http.Send()
     http.WaitForResponse()
 
@@ -1021,7 +1021,7 @@ checkForUpdate(*) {
                 downloadURL := ""
             ; Run(downloadURL)
             ; Télécharger le fichier
-            tempFile := A_ScriptDir "\B525-SMSManager-Update.exe"
+            tempFile := A_ScriptDir "\B525-Manager-Update.exe"
             try {
                 Download downloadURL, tempFile
             } catch as err {

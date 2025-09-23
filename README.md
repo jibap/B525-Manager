@@ -1,21 +1,21 @@
-# B525-SMSManager
+# B525-Manager
 Fonctionne sur Huawei B525s-65a (fonctionne peut-être sur d'autres modèles si API similaires).
 
 **Pour Windows : Notification dès qu'un SMS arrive et UI gestionnaire de SMS (suppression, envoi...) + Interrupteur WIFI direct + auto-Off** \
-**Pour Linux** : voir [Bash Version branch](https://github.com/jibap/B525-SMSManager/tree/Bash-version)
+**Pour Linux** : voir [Bash Version branch](https://github.com/jibap/B525-Manager/tree/Bash-version)
 
 ## Projet
 J'ai cherché en vain une petite appli facile à mettre en oeuvre qui permettrait sous Windows d'être notifié dès qu'un SMS arrive sur la box 4G... \
 Je l'ai donc crée avec **AutoHotKey et Bash** en partant du travail de **oga83** du forum https://routeur4g.fr/, puis comme le bash ne peut s'éxécuter sur Windows de façon silencieuse, j'ai finalement réécrit le script en **Powershell**, qui cette fois ne s'accapare pas le focus.
 
 #### AutoHotkey ?
-Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant [la version compilée (.exe)](https://github.com/jibap/B525-SMSManager/releases/latest), sinon vous devrez installer le logiciel : [https://www.autohotkey.com/download/ahk-install.exe](https://www.autohotkey.com/download/ahk-v2.exe) (NB: script écrit en V2 donc ne fonctionne pas en V1)
+Il est possible d'éxécuter mon appli **sans AutoHotKey** en utilisant [la version compilée (.exe)](https://github.com/jibap/B525-Manager/releases/latest), sinon vous devrez installer le logiciel : [https://www.autohotkey.com/download/ahk-install.exe](https://www.autohotkey.com/download/ahk-v2.exe) (NB: script écrit en V2 donc ne fonctionne pas en V1)
 
 ## Mise en oeuvre
 L'application fonctionne comme un logiciel portable, une fois les fichiers récupérés, il faut donc les placer à un endroit de votre arborescence où il pourront rester sans déranger (pas dans le dossier des téléchargements quoi !!!) 
 
-* <ins>Si vous n'avez pas le logiciel AHK installé</ins> : téléchargez et exécutez le [B525-SMSmanager.exe](https://github.com/jibap/B525-SMSManager/blob/main/B525-SMSManager.exe) qui fera une extraction des fichiers annexes (script powershell, icones, config)
-* <ins>Si vous utilisez déjà AHK</ins> (ou que vous préférez ne pas utiliser le .exe proposé) : téléchargez [l'archive du dépot](https://github.com/jibap/B525-SMSManager/archive/refs/heads/main.zip), dézipper (supprimez le .exe si vous voulez avant),  **renomez le fichier config_sample.ini en config.ini** et après avoir correctement complété ce dernier, éxécutez le B525-SMSManager.ahk pour le lancer. 
+* <ins>Si vous n'avez pas le logiciel AHK installé</ins> : téléchargez et exécutez le [B525-Manager.exe](https://github.com/jibap/B525-Manager/blob/main/B525-Manager.exe) qui fera une extraction des fichiers annexes (script powershell, icones, config)
+* <ins>Si vous utilisez déjà AHK</ins> (ou que vous préférez ne pas utiliser le .exe proposé) : téléchargez [l'archive du dépot](https://github.com/jibap/B525-Manager/archive/refs/heads/main.zip), dézipper (supprimez le .exe si vous voulez avant),  **renomez le fichier config_sample.ini en config.ini** et après avoir correctement complété ce dernier, éxécutez le B525-Manager.ahk pour le lancer. 
 
 > Pour que l'application se lance au démarrage de l'ordi, pensez à la rajouter en tâche planifiée ou au dossier "Démarrage" de Windows (shell:startup)
 
@@ -52,10 +52,10 @@ Une fois le logiciel en cours d'exécution, une icône s'affiche au niveau de la
   
 * **Une nouvelle fonctionnalité (05/2024)** permets désormais **d'ouvrir directement le fichier "config.ini"** depuis le menu de la zone de notification ou sur un bouton dans l'interface du gestionnaire.
 
-![menu barre des taches](https://github.com/jibap/B525-SMSManager/assets/3915029/da5b7ce3-4195-4044-b4ff-62b113e1df41)
+![menu barre des taches](https://github.com/jibap/B525-Manager/assets/3915029/da5b7ce3-4195-4044-b4ff-62b113e1df41)
 
 * **Un double clic** sur l'icone affiche l'interface de gestion des SMS : une liste de tous les SMS présents sur la box\
-![interface](https://github.com/jibap/B525-SMSManager/assets/3915029/61011e5d-140b-4fa4-808e-799fc1770b12)
+![interface](https://github.com/jibap/B525-Manager/assets/3915029/61011e5d-140b-4fa4-808e-799fc1770b12)
 
 * Dans la liste, il est possible de faire une **sélection multiple** ou **un clic-droit** pour effectuer les actions telles que : supprimer, marquer comme lu ou **répondre** (double-clic sur une ligne pour répondre directement)
 

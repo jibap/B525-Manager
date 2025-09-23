@@ -1,1 +1,1 @@
-currentVersion := "v25.09.12"
+currentVersion := "v25.09.23"
