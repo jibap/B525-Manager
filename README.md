@@ -24,7 +24,7 @@ L'application fonctionne comme un logiciel portable, une fois les fichiers récu
 Il est nécessaire de renseigner le fichier config.ini, tout au moins l'entrée **ROUTER_PASSWORD**, les autres entrées étant optionnelles ou générées par défaut : 
 
 **ROUTER_USERNAME** : username de connexion au retour (**admin** par défaut)\
-**DELAY** : en secondes, période de vérification de nouveaux SMS (**5 minutes** par défaut)\
+**DELAY** : période de vérification de nouveaux SMS (**5 minutes** par défaut) peut-être exprimé en **s** (secondes), **m** (minutes) ou **h** (heures)\
 **ROUTER_IP** : adresse IP du routeur (**192.168.8.1** par défaut)\
 **AUTO_WIFI_OFF** : heure d'extinction automatique du Wifi au format HH:MM (laisser vide ou supprimer la ligne pour ne pas utiliser) 
 
