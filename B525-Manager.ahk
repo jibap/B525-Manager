@@ -59,15 +59,16 @@ sendSMSIconID := "215"
 refreshIconID := "239"
 deleteIconID := "32"
 quitIconID := "132"
-numeroIconID := "Icon161"
-dateIconID := "Icon250"
-messageIconID := "Icon157"
+numeroIconID := "161"
+dateIconID := "250"
+messageIconID := "157"
 hideIconID := "176"
 cancelIconID := "296"
 settingsIconID := "315"
 sendIconID := "195"
 resetIconID := "271"
 configFileIconID := "70"
+helpIconID := "222"
 
 ; DETERMINE LA VERSION DE WINDOWS
 objWMIService := ComObjGet("winmgmts:{impersonationLevel=impersonate}!\\" A_ComputerName "\root\cimv2")
@@ -77,11 +78,12 @@ for objOperatingSystem in objWMIService.ExecQuery("Select * from Win32_Operating
 if (InStr(windowsVersion, "10")) {
     validIconID := "297"
     unreadIconID := "321"
-    dateIconID := "Icon266"
+    dateIconID := "266"
     cancelIconID := "298"
     enableWifiIconID := "51"
     settingsIconID := "72"
     configFileIconID := "72"
+    helpIconID := "277"
 }
 
 ; Création d'une liste d'icones système pour la ListView
@@ -182,11 +184,11 @@ ConfigGUIOpenButton := ListSMSGUI.Add("Button", "x+5 y8 w35 r2 +0x40 +0x0C", A_S
 LV_SMS := ListSMSGUI.Add("ListView", "section xs R10 w700  Grid AltSubmit -Hdr", ["", "contactName", "Time", "Message", "Index", "boxType", "phoneNumber"])
 
 ; DETAILS DES SMS
-ListSMSGUI.Add("Picture", "section " . numeroIconID . " w16 h16", "shell32.dll")
+ListSMSGUI.Add("Picture", "section Icon" . numeroIconID . " w16 h16", "shell32.dll")
 FullNumeroEdit := ListSMSGUI.Add("Edit", "ReadOnly x+5 w150 h20")
-ListSMSGUI.Add("Picture", "x+5 " . dateIconID . " w16 h16", "shell32.dll")
+ListSMSGUI.Add("Picture", "x+5 Icon" . dateIconID . " w16 h16", "shell32.dll")
 FullDateText := ListSMSGUI.Add("Text", "x+5 w200 h20 vFullDate")
-ListSMSGUI.Add("Picture", "section xs " . messageIconID . " w16 h16", "shell32.dll")
+ListSMSGUI.Add("Picture", "section xs ICon" . messageIconID . " w16 h16", "shell32.dll")
 FullMessageEdit := ListSMSGUI.Add("Edit", "ReadOnly x+5 w670 h50 ", helpText)
 
 ; BOUTONS DU BAS
@@ -286,64 +288,68 @@ SendSMSGUI.OnEvent("Escape", SendSMSGUIClose)
 ConfigGUI := Gui("")
 ConfigGUI.Title := "Configuration"
 
-ConfigGUI.Tips := GuiCtrlTips(ConfigGUI)      ; create a GuiCtrlTips instance
-ConfigGUI.Tips.SetBkColor(0xFFFFFF)         ; set the background colour
-ConfigGUI.Tips.SetTxColor(0x404040)         ; set the text colour
-ConfigGUI.Tips.SetMargins(4, 4, 4, 4)       ; set the tect margins
+ConfigGUI.Tips := GuiCtrlTips(ConfigGUI) 
+ConfigGUI.Tips.SetBkColor(0xFFFFFF)    
+ConfigGUI.Tips.SetTxColor(0x404040)    
+ConfigGUI.Tips.SetMargins(4, 4, 4, 4)  
 
 ConfigGUI.SetFont("w700", "Segoe UI")
-ConfigGUI.Add("GroupBox", "w350 h100", "Connexion au routeur Huawei")
+ConfigGUI.Add("GroupBox", "w300 h110", "Connexion au routeur Huawei")
 ConfigGUI.SetFont("w400", "Segoe UI")
 
-ConfigGUI.Add("Text","xs+25 ys+20" , "Adresse IP :")
+ConfigGUI.Add("Text","xs+80 ys+20" , "Adresse IP :")
 ipRouterEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", ipRouter)
-ipRouterInfo := ConfigGUI.Add("Text", "x+5 yp+3" , "( par défaut : 192.168.8.1 )  ")
-ipRouterInfo.SetFont("cGray")
+ipRouterHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
+SetButtonIcon(ipRouterHelp, "shell32.dll", helpIconID, 20)
+ConfigGUI.Tips.SetTip(ipRouterHelp, "par défaut : 192.168.8.1")
 
-ConfigGUI.Add("Text", "xs+28 y+15" , "Utilisateur :")
+ConfigGUI.Add("Text", "xs+83 y+15" , "Utilisateur :")
 usernameEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", username)
-usernameInfo := ConfigGUI.Add("Text", "x+5 yp+3" , "( par défaut : admin )  ")
-usernameInfo.SetFont("cGray")
+usernameHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
+SetButtonIcon(usernameHelp, "shell32.dll", helpIconID, 20)
+ConfigGUI.Tips.SetTip(usernameHelp, "par défaut : admin")
 
-ConfigGUI.Add("Text", "xs+10 y+15" , "Mot de passe :")
+ConfigGUI.Add("Text", "xs+65 y+15" , "Mot de passe :")
 passwordEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", password)
-passwordInfo := ConfigGUI.Add("Text", "x+5 yp+3" , "( par défaut : adminBox )  ")
-passwordInfo.SetFont("cGray")
+passwordHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
+SetButtonIcon(passwordHelp, "shell32.dll", helpIconID, 20)
+ConfigGUI.Tips.SetTip(passwordHelp, "par défaut : adminBox")
 
 ConfigGUI.SetFont("w700", "Segoe UI")
-ConfigGUI.Add("GroupBox", "section xs y120 w350 h70", "Options")
+ConfigGUI.Add("GroupBox", "section xs y130 w300 h80", "Options")
 ConfigGUI.SetFont("w400", "Segoe UI")
 
 ConfigGUI.Add("Text", "xs+10 ys+20" , "Actualisation :")
 delayEdit := ConfigGUI.Add("Edit", "w30 x+5 yp-3", loopDelay)
-delayInfo := ConfigGUI.Add("Text", "x+5 yp+3" , "période exprimée en s, m ou h ( par défaut : 5m) ")
-delayInfo.SetFont("cGray")
+delayHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
+SetButtonIcon(delayHelp, "shell32.dll", helpIconID, 20)
+ConfigGUI.Tips.SetTip(delayHelp, "par défaut : 5m ▶ Période exprimée en s (secondes), m (minutes) ou h (heures)")
 
 ConfigGUI.Add("Text", "xs+10 y+15" , "Extinction automatique du Wifi à ")
 autoWifiOffEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm", )
 autoWifiOffEdit.Value := TimeToDateTimeValue(autoWifiOff)
 autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "x+10 yp+5" , "Activé ")
 autoWifiOffStatusCB.Value := autoWifiOffStatus
+autoWifiOffHelp := ConfigGUI.Add("Button", "w16 h16 x+0 yp-2 +0x40 +0x0C", A_Space)
+SetButtonIcon(autoWifiOffHelp, "shell32.dll", helpIconID, 20)
+ConfigGUI.Tips.SetTip(autoWifiOffHelp, "Pour ne pas oublier d'éteindre le Wifi...")
 
-ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 r2 +0x40 +0x0C", A_Space)
-ConfigGUICancelButton := ConfigGUI.Add("Button", "section x+10  w125 r2", A_Space . "Annuler")
-ConfigGUIValidButton := ConfigGUI.Add("Button", "ys  w125 r2", A_Space . "Enregistrer")
-ConfigGUIOpenFileButton := ConfigGUI.Add("Button", "ys  w35 r2 +0x40 +0x0C", A_Space)
-
-; INFOBULLES
+ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 y+40 r2 +0x40 +0x0C", A_Space)
 ConfigGUI.Tips.SetTip(ConfigGUIResetButton, "Réinitialiser avec les valeurs par défaut")
-ConfigGUI.Tips.SetTip(ConfigGUIOpenFileButton, "Ouvrir le fichier de configuration")
-
-; ICONES
 SetButtonIcon(ConfigGUIResetButton, "imageres.dll", resetIconID, 20)
-SetButtonIcon(ConfigGUICancelButton, "shell32.dll", cancelIconID, 20)
-SetButtonIcon(ConfigGUIValidButton, "shell32.dll", validIconID, 20)
-SetButtonIcon(ConfigGUIOpenFileButton, "shell32.dll", configFileIconID, 20)
-
-; EVENEMENTS
 ConfigGUIResetButton.OnEvent("Click", ConfigGUIReset)
+
+ConfigGUICancelButton := ConfigGUI.Add("Button", "section x+10 w100 r2", A_Space . "Annuler")
+SetButtonIcon(ConfigGUICancelButton, "shell32.dll", cancelIconID, 20)
 ConfigGUICancelButton.OnEvent("Click", ConfigGUIClose)
+
+ConfigGUIValidButton := ConfigGUI.Add("Button", "x+10 ys  w100 r2", A_Space . "Enregistrer")
+SetButtonIcon(ConfigGUIValidButton, "shell32.dll", validIconID, 20)
 ConfigGUIValidButton.OnEvent("Click", ConfigGUIValid)
+
+ConfigGUIOpenFileButton := ConfigGUI.Add("Button", "ys  w35 r2 +0x40 +0x0C", A_Space)
+ConfigGUI.Tips.SetTip(ConfigGUIOpenFileButton, "Ouvrir le fichier de configuration")
+SetButtonIcon(ConfigGUIOpenFileButton, "shell32.dll", configFileIconID, 20)
 ConfigGUIOpenFileButton.OnEvent("Click", ConfigGUIOpenFile)
 
 ; ######## ##     ## ##    ##  ######  ######## ####  #######  ##    ##  ######
