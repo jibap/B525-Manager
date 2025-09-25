@@ -1,6 +1,7 @@
 Persistent
 #Warn
 #SingleInstance force ; Ecrase si instance en cours
+#Include <GuiCtrlTips>
 OnExit(ExitAppli)
 
 DllCall("AllocConsole")
@@ -11,6 +12,7 @@ SetWorkingDir(A_ScriptDir)
 
 OnMessage(0x404, ClicOnNotif) ; CLIC sur la notif pour ouvrir la GUI
 OnMessage(0x404, OnTrayClick) ; Capture les événements liés au Tray
+
 
 psShell := "" ; Initialisation de la variable globale pour eviter erreur onExit()
 
@@ -284,6 +286,11 @@ SendSMSGUI.OnEvent("Escape", SendSMSGUIClose)
 ConfigGUI := Gui("")
 ConfigGUI.Title := "Configuration"
 
+ConfigGUI.Tips := GuiCtrlTips(ConfigGUI)      ; create a GuiCtrlTips instance
+ConfigGUI.Tips.SetBkColor(0xFFFFFF)         ; set the background colour
+ConfigGUI.Tips.SetTxColor(0x404040)         ; set the text colour
+ConfigGUI.Tips.SetMargins(4, 4, 4, 4)       ; set the tect margins
+
 ConfigGUI.SetFont("w700", "Segoe UI")
 ConfigGUI.Add("GroupBox", "w350 h100", "Connexion au routeur Huawei")
 ConfigGUI.SetFont("w400", "Segoe UI")
@@ -322,6 +329,10 @@ ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 r2 +0x40 +0x0C",
 ConfigGUICancelButton := ConfigGUI.Add("Button", "section x+10  w125 r2", A_Space . "Annuler")
 ConfigGUIValidButton := ConfigGUI.Add("Button", "ys  w125 r2", A_Space . "Enregistrer")
 ConfigGUIOpenFileButton := ConfigGUI.Add("Button", "ys  w35 r2 +0x40 +0x0C", A_Space)
+
+; INFOBULLES
+ConfigGUI.Tips.SetTip(ConfigGUIResetButton, "Réinitialiser avec les valeurs par défaut")
+ConfigGUI.Tips.SetTip(ConfigGUIOpenFileButton, "Ouvrir le fichier de configuration")
 
 ; ICONES
 SetButtonIcon(ConfigGUIResetButton, "imageres.dll", resetIconID, 20)
