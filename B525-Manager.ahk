@@ -330,9 +330,6 @@ autoWifiOffEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm", )
 autoWifiOffEdit.Value := TimeToDateTimeValue(autoWifiOff)
 autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "x+10 yp+5" , "Activé ")
 autoWifiOffStatusCB.Value := autoWifiOffStatus
-autoWifiOffHelp := ConfigGUI.Add("Button", "w16 h16 x+0 yp-2 +0x40 +0x0C", A_Space)
-SetButtonIcon(autoWifiOffHelp, "shell32.dll", helpIconID, 20)
-ConfigGUI.Tips.SetTip(autoWifiOffHelp, "Pour ne pas oublier d'éteindre le Wifi...")
 
 ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 y+40 r2 +0x40 +0x0C", A_Space)
 ConfigGUI.Tips.SetTip(ConfigGUIResetButton, "Réinitialiser avec les valeurs par défaut")
