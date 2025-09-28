@@ -2,17 +2,17 @@ Persistent
 #Warn
 #SingleInstance force ; Ecrase si instance en cours
 #Include <GuiCtrlTips>
+#Include <GuiEditListView>
 OnExit(ExitAppli)
 
 DllCall("AllocConsole")
 WinHide("ahk_id " DllCall("GetConsoleWindow", "ptr"))
 
 SendMode("Input")  ;
-SetWorkingDir(A_ScriptDir) 
+SetWorkingDir(A_ScriptDir)
 
 OnMessage(0x404, ClicOnNotif) ; CLIC sur la notif pour ouvrir la GUI
 OnMessage(0x404, OnTrayClick) ; Capture les événements liés au Tray
-
 
 psShell := "" ; Initialisation de la variable globale pour eviter erreur onExit()
 
@@ -44,7 +44,8 @@ if !FileExist("config.ini") {
 wifiStatus := 0
 lastIcon := "noSMS"
 data := {}
-helpText := "Cliquer sur une ligne pour afficher et pouvoir sélectionner le texte du SMS dans cette zone. Double-Clic pour répondre... "
+helpText :=
+    "Cliquer sur une ligne pour afficher et pouvoir sélectionner le texte du SMS dans cette zone. Double-Clic pour répondre... "
 refreshing := false
 contactsArray := Array()
 ignoreDestEdit := false
@@ -59,7 +60,7 @@ sendSMSIconID := "215"
 refreshIconID := "239"
 deleteIconID := "32"
 quitIconID := "132"
-numeroIconID := "161"
+contactIconID := "161"
 dateIconID := "250"
 messageIconID := "157"
 hideIconID := "176"
@@ -69,6 +70,8 @@ sendIconID := "195"
 resetIconID := "271"
 configFileIconID := "70"
 helpIconID := "222"
+moveUpIconID := "247"
+moveDownIconID := "248"
 
 ; DETERMINE LA VERSION DE WINDOWS
 objWMIService := ComObjGet("winmgmts:{impersonationLevel=impersonate}!\\" A_ComputerName "\root\cimv2")
@@ -84,6 +87,8 @@ if (InStr(windowsVersion, "10")) {
     settingsIconID := "72"
     configFileIconID := "72"
     helpIconID := "277"
+    moveUpIconID := "246"
+    moveDownIconID := "247"
 }
 
 ; Création d'une liste d'icones système pour la ListView
@@ -116,20 +121,20 @@ if (!password || Type(password) != "String") {
 default_autoWifiOffStatus := "0"
 autoWifiOffStatus := IniRead("config.ini", "main", "AUTO_WIFI_OFF_STATUS", default_autoWifiOffStatus)
 autoWifiOffStatus := autoWifiOffStatus + 0 ; force en entier
-if (!autoWifiOffStatus || !IsBoolean(autoWifiOffStatus) ) {
+if (!autoWifiOffStatus || !IsBoolean(autoWifiOffStatus)) {
     autoWifiOffStatus := default_autoWifiOffStatus + 0 ; force en entier
     IniWrite(autoWifiOffStatus, "config.ini", "main", "AUTO_WIFI_OFF_STATUS")
 }
 default_autoWifiOff := "18:00"
 autoWifiOff := IniRead("config.ini", "main", "AUTO_WIFI_OFF", default_autoWifiOff)
 if (!autoWifiOff || !RegExMatch(autoWifiOff, "^\d{2}:\d{2}$")) {
-    autoWifiOff := default_autoWifiOff 
+    autoWifiOff := default_autoWifiOff
     IniWrite(autoWifiOff, "config.ini", "main", "AUTO_WIFI_OFF")
 }
 default_loopDelay := "5m"
 loopDelay := IniRead("config.ini", "main", "DELAY", default_loopDelay)
 if (!loopDelay || !RegExMatch(loopDelay, "i)^\d+[smh]$")) {
-    loopDelay := default_loopDelay 
+    loopDelay := default_loopDelay
     IniWrite(loopDelay, "config.ini", "main", "DELAY")
 }
 
@@ -173,18 +178,24 @@ trayMenu.SetIcon("12&", "shell32.dll", refreshIconID)
 ListSMSGUI := Gui("")
 ListSMSGUI.Title := "B525-Manager  [" currentVersion "]"
 
+initTips(ListSMSGUI)
+
 ; BOUTONS DU HAUT
 RefreshButton := ListSMSGUI.Add("Button", "x10 y8 w100 r2", A_Space . "Actualiser")
-ReadAllButton := ListSMSGUI.Add("Button", "x+5 y8 w200 r2 Disabled", A_Space . "Tout marquer comme lu")
-DeleteAllButton := ListSMSGUI.Add("Button", "x+5 y8 w150 r2 Disabled", A_Space . "Tout supprimer")
+ReadAllButton := ListSMSGUI.Add("Button", "x+5 y8 w180 r2 Disabled", A_Space . "Tout marquer comme lu")
+DeleteAllButton := ListSMSGUI.Add("Button", "x+5 y8 w130 r2 Disabled", A_Space . "Tout supprimer")
 TextInfo := ListSMSGUI.Add("Text", "x+5 y20 w195 h20", "")
+ContactsGUIOpenButton := ListSMSGUI.Add("Button", "x+5 y8 w35 r2 +0x40 +0x0C", A_Space)
+ListSMSGUI.Tips.SetTip(ContactsGUIOpenButton, "Gestion des contacts")
 ConfigGUIOpenButton := ListSMSGUI.Add("Button", "x+5 y8 w35 r2 +0x40 +0x0C", A_Space)
+ListSMSGUI.Tips.SetTip(ConfigGUIOpenButton, "Configuration")
 
 ; TABLEAU DES SMS
-LV_SMS := ListSMSGUI.Add("ListView", "section xs R10 w700  Grid AltSubmit -Hdr", ["", "contactName", "Time", "Message", "Index", "boxType", "phoneNumber"])
+LV_SMS := ListSMSGUI.Add("ListView", "section xs R10 w700  Grid AltSubmit -Hdr", ["", "contactName", "Time", "Message",
+    "Index", "boxType", "phoneNumber"])
 
 ; DETAILS DES SMS
-ListSMSGUI.Add("Picture", "section Icon" . numeroIconID . " w16 h16", "shell32.dll")
+ListSMSGUI.Add("Picture", "section Icon" . contactIconID . " w16 h16", "shell32.dll")
 FullNumeroEdit := ListSMSGUI.Add("Edit", "ReadOnly x+5 w150 h20")
 ListSMSGUI.Add("Picture", "x+5 Icon" . dateIconID . " w16 h16", "shell32.dll")
 FullDateText := ListSMSGUI.Add("Text", "x+5 w200 h20 vFullDate")
@@ -201,6 +212,7 @@ HideGUIButton := ListSMSGUI.Add("Button", "x+40 w150 r2", "Cacher la fenêtre")
 SetButtonIcon(RefreshButton, "shell32.dll", refreshIconID, 20)
 SetButtonIcon(ReadAllButton, "shell32.dll", validIconID, 20)
 SetButtonIcon(DeleteAllButton, "shell32.dll", deleteIconID, 20)
+SetButtonIcon(ContactsGUIOpenButton, "shell32.dll", contactIconID, 20)
 SetButtonIcon(ConfigGUIOpenButton, "shell32.dll", settingsIconID, 20)
 SetButtonIcon(openWebPageButton, "shell32.dll", openWebPageIconID, 20)
 SetButtonIcon(SwitchWifiButton, "ddores.dll", enableWifiIconID, 20)
@@ -213,6 +225,7 @@ LV_SMS.SetImageList(ImageListID)  ; APPLIQUE LES ICONES DANS LA LISTE
 RefreshButton.OnEvent("Click", Refresh)
 ReadAllButton.OnEvent("Click", TagSMSAsReadButtonClick)
 DeleteAllButton.OnEvent("Click", DeleteSMS)
+ContactsGUIOpenButton.OnEvent("Click", ContactsGUIOpen)
 ConfigGUIOpenButton.OnEvent("Click", ConfigGUIOpen)
 
 openWebPageButton.OnEvent("Click", OpenWebPage)
@@ -254,62 +267,57 @@ SendSMSGUI.Title := "Envoi de SMS sur Box4G"
 
 SendSMSGUI.Add("Text", , "Message:")
 messageToDest := SendSMSGUI.Add("Edit", "w240 r5 ys")
+
 SendSMSGUI.Add("Text", "section xs w65", "Destinataire :")
-
 DDLContactChoice := SendSMSGUI.Add("DropDownList", "ys w200")
-SendSMSGUI.Add("Text", "section xs w65", "Numéro :")
+DDLContactChoice.OnEvent("Change", OnDDLContactChoiceChange)
 
+SendSMSGUI.Add("Text", "section xs w65", "Numéro :")
 numberDest := SendSMSGUI.Add("Edit", "ys w80 Limit10 Number")
+numberDest.OnEvent("Change", OnDestNumberEdit)
 
 SendSMSGUICancelButton := SendSMSGUI.Add("Button", "section xs  w150 r2", "Annuler")
-SendSMSGUISendButton := SendSMSGUI.Add("Button", "ys  w150 r2", "Envoi")
-
-; ICONES
 SetButtonIcon(SendSMSGUICancelButton, "shell32.dll", cancelIconID, 20)
-SetButtonIcon(SendSMSGUISendButton, "imageres.dll", sendIconID, 20)
-
-; EVENEMENTS
-numberDest.OnEvent("Change", OnDestNumberEdit)
-DDLContactChoice.OnEvent("Change", OnDDLContactChoiceChange)
 SendSMSGUICancelButton.OnEvent("Click", SendSMSGUIClose)
+
+SendSMSGUISendButton := SendSMSGUI.Add("Button", "ys  w150 r2", "Envoi")
+SetButtonIcon(SendSMSGUISendButton, "imageres.dll", sendIconID, 20)
 SendSMSGUISendButton.OnEvent("Click", SendSMSGUISend)
+
+; EXIT
 SendSMSGUI.OnEvent("Close", SendSMSGUIClose)
 SendSMSGUI.OnEvent("Escape", SendSMSGUIClose)
 
-;  ######   #######  ##    ## ######## ####  ######       ######   ##     ## #### 
-; ##    ## ##     ## ###   ## ##        ##  ##    ##     ##    ##  ##     ##  ##  
-; ##       ##     ## ####  ## ##        ##  ##           ##        ##     ##  ##  
-; ##       ##     ## ## ## ## ######    ##  ##   ####    ##   #### ##     ##  ##  
-; ##       ##     ## ##  #### ##        ##  ##    ##     ##    ##  ##     ##  ##  
-; ##    ## ##     ## ##   ### ##        ##  ##    ##     ##    ##  ##     ##  ##  
-;  ######   #######  ##    ## ##       ####  ######       ######    #######  #### 
-
+;  ######   #######  ##    ## ######## ####  ######       ######   ##     ## ####
+; ##    ## ##     ## ###   ## ##        ##  ##    ##     ##    ##  ##     ##  ##
+; ##       ##     ## ####  ## ##        ##  ##           ##        ##     ##  ##
+; ##       ##     ## ## ## ## ######    ##  ##   ####    ##   #### ##     ##  ##
+; ##       ##     ## ##  #### ##        ##  ##    ##     ##    ##  ##     ##  ##
+; ##    ## ##     ## ##   ### ##        ##  ##    ##     ##    ##  ##     ##  ##
+;  ######   #######  ##    ## ##       ####  ######       ######    #######  ####
 
 ConfigGUI := Gui("")
 ConfigGUI.Title := "Configuration"
 
-ConfigGUI.Tips := GuiCtrlTips(ConfigGUI) 
-ConfigGUI.Tips.SetBkColor(0xFFFFFF)    
-ConfigGUI.Tips.SetTxColor(0x404040)    
-ConfigGUI.Tips.SetMargins(4, 4, 4, 4)  
+initTips(ConfigGUI)
 
 ConfigGUI.SetFont("w700", "Segoe UI")
 ConfigGUI.Add("GroupBox", "w300 h110", "Connexion au routeur Huawei")
 ConfigGUI.SetFont("w400", "Segoe UI")
 
-ConfigGUI.Add("Text","xs+80 ys+20" , "Adresse IP :")
+ConfigGUI.Add("Text", "xs+80 ys+20", "Adresse IP :")
 ipRouterEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", ipRouter)
 ipRouterHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
 SetButtonIcon(ipRouterHelp, "shell32.dll", helpIconID, 20)
 ConfigGUI.Tips.SetTip(ipRouterHelp, "par défaut : 192.168.8.1")
 
-ConfigGUI.Add("Text", "xs+83 y+15" , "Utilisateur :")
+ConfigGUI.Add("Text", "xs+83 y+15", "Utilisateur :")
 usernameEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", username)
 usernameHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
 SetButtonIcon(usernameHelp, "shell32.dll", helpIconID, 20)
 ConfigGUI.Tips.SetTip(usernameHelp, "par défaut : admin")
 
-ConfigGUI.Add("Text", "xs+65 y+15" , "Mot de passe :")
+ConfigGUI.Add("Text", "xs+65 y+15", "Mot de passe :")
 passwordEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", password)
 passwordHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
 SetButtonIcon(passwordHelp, "shell32.dll", helpIconID, 20)
@@ -319,16 +327,16 @@ ConfigGUI.SetFont("w700", "Segoe UI")
 ConfigGUI.Add("GroupBox", "section xs y130 w300 h80", "Options")
 ConfigGUI.SetFont("w400", "Segoe UI")
 
-ConfigGUI.Add("Text", "xs+10 ys+20" , "Actualisation :")
+ConfigGUI.Add("Text", "xs+10 ys+20", "Actualisation :")
 delayEdit := ConfigGUI.Add("Edit", "w30 x+5 yp-3", loopDelay)
 delayHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
 SetButtonIcon(delayHelp, "shell32.dll", helpIconID, 20)
 ConfigGUI.Tips.SetTip(delayHelp, "par défaut : 5m ▶ Période exprimée en s (secondes), m (minutes) ou h (heures)")
 
-ConfigGUI.Add("Text", "xs+10 y+15" , "Extinction automatique du Wifi à ")
-autoWifiOffEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm", )
+ConfigGUI.Add("Text", "xs+10 y+15", "Extinction automatique du Wifi à ")
+autoWifiOffEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm",)
 autoWifiOffEdit.Value := TimeToDateTimeValue(autoWifiOff)
-autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "x+10 yp+5" , "Activé ")
+autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "x+10 yp+5", "Activé ")
 autoWifiOffStatusCB.Value := autoWifiOffStatus
 
 ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 y+40 r2 +0x40 +0x0C", A_Space)
@@ -349,6 +357,50 @@ ConfigGUI.Tips.SetTip(ConfigGUIOpenFileButton, "Ouvrir le fichier de configurati
 SetButtonIcon(ConfigGUIOpenFileButton, "shell32.dll", configFileIconID, 20)
 ConfigGUIOpenFileButton.OnEvent("Click", ConfigGUIOpenFile)
 
+; ##       ####  ######  ########     ######   #######  ##    ## ########    ###     ######  ########  ######      ######   ##     ## ####
+; ##        ##  ##    ##    ##       ##    ## ##     ## ###   ##    ##      ## ##   ##    ##    ##    ##    ##    ##    ##  ##     ##  ##
+; ##        ##  ##          ##       ##       ##     ## ####  ##    ##     ##   ##  ##          ##    ##          ##        ##     ##  ##
+; ##        ##   ######     ##       ##       ##     ## ## ## ##    ##    ##     ## ##          ##     ######     ##   #### ##     ##  ##
+; ##        ##        ##    ##       ##       ##     ## ##  ####    ##    ######### ##          ##          ##    ##    ##  ##     ##  ##
+; ##        ##  ##    ##    ##       ##    ## ##     ## ##   ###    ##    ##     ## ##    ##    ##    ##    ##    ##    ##  ##     ##  ##
+; ######## ####  ######     ##        ######   #######  ##    ##    ##    ##     ##  ######     ##     ######      ######    #######  ####
+
+EditContactsGUI := Gui(, "Gestion de contacts")
+
+; --- Boutons ---
+addContactButton := EditContactsGUI.AddButton("xm r2 w100", A_Space . "Ajouter")
+SetButtonIcon(addContactButton, "shell32.dll", contactIconID, 20)
+addContactButton.OnEvent("Click", (*) => AddAndSelectContact(LV_Contacts, EditInlineContactLV))
+
+delContactButton := EditContactsGUI.AddButton("x+5 r2 w100", A_Space . "Supprimer")
+SetButtonIcon(delContactButton, "shell32.dll", deleteIconID, 20)
+delContactButton.OnEvent("Click", (*) => DeleteSelectedContact(LV_Contacts))
+
+moveUpContactButton := EditContactsGUI.AddButton("x+20 w35 r2 +0x40 +0x0C", A_Space)
+SetButtonIcon(moveUpContactButton, "shell32.dll", moveUpIconID, 20)
+moveUpContactButton.OnEvent("Click", (*) => MoveContactRow(LV_Contacts, -1))
+
+moveDownContactButton := EditContactsGUI.AddButton("x+5 w35 r2 +0x40 +0x0C", A_Space)
+SetButtonIcon(moveDownContactButton, "shell32.dll", moveDownIconID, 20)
+moveDownContactButton.OnEvent("Click", (*) => MoveContactRow(LV_Contacts, 1))
+
+ContactHeaders := ["Nom", "Téléphone"]
+LV_Contacts := EditContactsGUI.AddListView("xs w300 r10 Grid -ReadOnly", ContactHeaders)
+
+cancelContactButton := EditContactsGUI.Add("Button", "xs+50 w100 r2", A_Space . "Annuler")
+SetButtonIcon(cancelContactButton, "shell32.dll", cancelIconID, 20)
+cancelContactButton.OnEvent("Click", (*) => EditContactsGUI.Hide())
+
+saveContactButton := EditContactsGUI.Add("Button", "x+10  w100 r2", A_Space . "Enregistrer")
+SetButtonIcon(saveContactButton, "shell32.dll", validIconID, 20)
+saveContactButton.OnEvent("Click", (*) => SaveContactsData(LV_Contacts))
+
+; EXIT
+EditContactsGUI.OnEvent("Close", (*) => EditContactsGUI.Hide())
+
+; Attacher l'édition inline
+EditInlineContactLV := LVEditInline(LV_Contacts)
+
 ; ######## ##     ## ##    ##  ######  ######## ####  #######  ##    ##  ######
 ; ##       ##     ## ###   ## ##    ##    ##     ##  ##     ## ###   ## ##    ##
 ; ##       ##     ## ####  ## ##          ##     ##  ##     ## ####  ## ##
@@ -356,6 +408,13 @@ ConfigGUIOpenFileButton.OnEvent("Click", ConfigGUIOpenFile)
 ; ##       ##     ## ##  #### ##          ##     ##  ##     ## ##  ####       ##
 ; ##       ##     ## ##   ### ##    ##    ##     ##  ##     ## ##   ### ##    ##
 ; ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
+
+initTips(GUIObj){
+    GUIObj.Tips := GuiCtrlTips(GUIObj)
+    GUIObj.Tips.SetBkColor(0xFFFFFF)
+    GUIObj.Tips.SetTxColor(0x404040)
+    GUIObj.Tips.SetMargins(4, 4, 4, 4)
+}
 
 IsBoolean(val) {
     return (val = 0 || val = 1)
@@ -381,28 +440,22 @@ DelayToMs(value) {
 
 RefreshContactsArray() {
     global contactsArray
+    contactsArray := [] ; Réinitialise le tableau
 
-    iniList := IniRead("config.ini", "contacts")
-    if !iniList  ; Pas de contacts configurés
+    iniList := IniRead("config.ini", "contacts", , "")
+    if (iniList == "") { ; Pas de contacts configurés
         return
+    }
 
     contacts := StrSplit(iniList, "`n")
-    contactsArray := [] ; Réinitialise le tableau
-	itemsForDDL := [] ; array simple pour remplir la dropdownlist
-
     for _, contactLine in contacts {
         egalPos := InStr(contactLine, "=")
         if (egalPos <= 0)
             continue
-        num  := SubStr(contactLine, 1, egalPos - 1)
+        num := SubStr(contactLine, 1, egalPos - 1)
         name := SubStr(contactLine, egalPos + 1)
         contactsArray.Push({ num: num, name: name })
-		itemsForDDL.Push(name " (" num ")")
     }
-	
-	; Met à jour la liste des contacts
-    DDLContactChoice.Delete()
-	DDLContactChoice.Add(itemsForDDL)
 }
 
 lastClickTime := 0
@@ -479,9 +532,10 @@ ClicOnNotif(wParam, lParam, msg, hwnd) {
 }
 
 ; Permet de valider une IP
-ValidIP(IPAddress){
-	; Expression régulière pour une adresse IPv4 valide
-    RegEx := "^\b(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b$"
+ValidIP(IPAddress) {
+    ; Expression régulière pour une adresse IPv4 valide
+    RegEx :=
+        "^\b(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b$"
 
     ; Utilisation de RegExMatch pour tester l'adresse IP
     if (RegExMatch(IPAddress, RegEx)) {
@@ -596,7 +650,8 @@ RunBoxCmd(command) {
             errorText := "Une erreur est survenue : `n`n" . result
             ; Cas spécial où il y a une erreur de mot de passe, quitte l'application immédiatement
             if (InStr(result, "PASSWORD")) {
-                errorText := "Le mot de passe configuré est incorrect !`n`nVeuillez vérifier le fichier `"config.ini`" `n `nNB : Le compte est peut-être aussi verrouillé suite à de trop nombreuses tentatives incorrectes..."
+                errorText :=
+                    "Le mot de passe configuré est incorrect !`n`nVeuillez vérifier le fichier `"config.ini`" `n `nNB : Le compte est peut-être aussi verrouillé suite à de trop nombreuses tentatives incorrectes..."
             }
             errorText := errorText . "`n`nL'éxécution du programme est annulée."
             MsgBox(errorText, "ERREUR !", 48)
@@ -670,6 +725,10 @@ DateTimeValueToTime(dateTimeValue) {
     return SubStr(dateTimeValue, 9, 2) ":" SubStr(dateTimeValue, 11, 2)
 }
 
+IsPhoneNumber(number) {
+    number := Trim(number)
+    return RegExMatch(number, "^\d+$")
+}
 
 ; ########  ######## ######## ########  ########  ######  ##     ##
 ; ##     ## ##       ##       ##     ## ##       ##    ## ##     ##
@@ -828,8 +887,7 @@ CreateSmsList(boxType, SMSList) {
             phoneNumber := StrReplace(phoneNumber, "+", "")
             phoneNumber := StrReplace(phoneNumber, 33, 0)
             ; Recherche du nom dans les contacts
-			contactName := GetContactNameByNumber(phoneNumber)
-            contactName := Utf8ToText(contactName)
+            contactName := GetContactNameByNumber(phoneNumber)
             dateMessage := messages.getElementsByTagName("Date").item[0].text
             dateMessage := "Le " . SubStr(dateMessage, 1, 10) . "  à  " . SubStr(dateMessage, 12, 19)
             contentMessage := Utf8ToText(messages.getElementsByTagName("Content").item[0].text)
@@ -932,11 +990,12 @@ DeleteSMS(*) {
     selectedRowsCount := LV_SMS.GetCount("S") ; récupère les lignes sélectionnées
 
     if (selectedRowsCount = 0) {
-        msg := "Aucun message n'a été sélectionné donc tous les messages vont être supprimés définitivement, c'est sûr ?"
+        msg :=
+            "Aucun message n'a été sélectionné donc tous les messages vont être supprimés définitivement, c'est sûr ?"
     } else {
         RowNumber := 0
         loop selectedRowsCount {
-            RowNumber := LV_SMS.GetNext(RowNumber) 
+            RowNumber := LV_SMS.GetNext(RowNumber)
             index := LV_SMS.GetText(RowNumber, 5)
             listOfIndex.push(index)
         }
@@ -948,7 +1007,7 @@ DeleteSMS(*) {
     }
 
     ; Confirmation avant suppression
-    msgResult := MsgBox(msg, "ATTENTION !", 49) 
+    msgResult := MsgBox(msg, "ATTENTION !", 49)
 
     if (msgResult = "OK") {
         TextInfo.Value := "Suppression en cours..."
@@ -1008,12 +1067,24 @@ TagSMSAsRead(doRefresh := true) {
 
 SendSMSGUIShow(*) {
     if (BoxIsReachable(true)) {
+        RefreshContactsArray()
         if (contactsArray.Length) {
+            itemsForDDL := [] ; array simple pour remplir la dropdownlist
+
+            for _, contactObj in contactsArray {
+                itemsForDDL.Push(contactObj.name)
+            }
+
+            DDLContactChoice.Delete()
+            DDLContactChoice.Add(itemsForDDL)
+
             ; Init
             DDLContactChoice.Enabled := True
             DDLContactChoice.Value := 1
             OnDDLContactChoiceChange()
         } else {
+            DDLContactChoice.Enabled := False
+            DDLContactChoice.Value := 0
             numberDest.Text := ""
         }
         numberDest.Enabled := True
@@ -1023,16 +1094,16 @@ SendSMSGUIShow(*) {
 }
 
 OnDestNumberEdit(*) {
-	; Cherche si un contact a le numéro saisi pour l'afficher en DDL
+    ; Cherche si un contact a le numéro saisi pour l'afficher en DDL
     num := numberDest.Text
     SetDDLContactChoiceByNumber(num)
 }
 
 OnDDLContactChoiceChange(*) {
-	; Remplit le numéro du contact choisi
+    ; Remplit le numéro du contact choisi
     id := DDLContactChoice.Value
     if id {
-    	numberDest.Text := contactsArray[id].num
+        numberDest.Text := contactsArray[id].num
     }
 }
 
@@ -1052,7 +1123,7 @@ SetDDLContactChoiceByNumber(phoneNumber) {
 
 GetContactNameByNumber(phoneNumber) {
     result := FindContactByNumber(phoneNumber)
-    return result ? result.contact.name : phoneNumber
+    return result ? Utf8ToText(result.contact.name) : phoneNumber
 }
 
 SendSMSGUIClose(*) {
@@ -1072,11 +1143,8 @@ SendSMSGUISend(*) {
         return
     }
 
-    contactName := IniRead("config.ini", "contacts", numberDest.Text, numberDest.Text)
-    contactName := Utf8ToText(contactName)
-
-    if (contactName != "ERROR") {
-        dest := "à " . contactName
+    if(DDLContactChoice.Text != ""){
+        dest := "à " . DDLContactChoice.Text
     } else {
         dest := "au " . numberDest.Text
     }
@@ -1106,14 +1174,13 @@ SendSMSGUISend(*) {
     }
 }
 
-;  ######   #######  ##    ## ########    ######   ##     ## ####    ######## ##     ## ##    ##  ######  ######## ####  #######  ##    ##  ######  
-; ##    ## ##     ## ###   ## ##         ##    ##  ##     ##  ##     ##       ##     ## ###   ## ##    ##    ##     ##  ##     ## ###   ## ##    ## 
-; ##       ##     ## ####  ## ##         ##        ##     ##  ##     ##       ##     ## ####  ## ##          ##     ##  ##     ## ####  ## ##       
-; ##       ##     ## ## ## ## ######     ##   #### ##     ##  ##     ######   ##     ## ## ## ## ##          ##     ##  ##     ## ## ## ##  ######  
-; ##       ##     ## ##  #### ##         ##    ##  ##     ##  ##     ##       ##     ## ##  #### ##          ##     ##  ##     ## ##  ####       ## 
-; ##    ## ##     ## ##   ### ##         ##    ##  ##     ##  ##     ##       ##     ## ##   ### ##    ##    ##     ##  ##     ## ##   ### ##    ## 
-;  ######   #######  ##    ## ##          ######    #######  ####    ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######  
-
+;  ######   #######  ##    ## ########    ######   ##     ## ####    ######## ##     ## ##    ##  ######  ######## ####  #######  ##    ##  ######
+; ##    ## ##     ## ###   ## ##         ##    ##  ##     ##  ##     ##       ##     ## ###   ## ##    ##    ##     ##  ##     ## ###   ## ##    ##
+; ##       ##     ## ####  ## ##         ##        ##     ##  ##     ##       ##     ## ####  ## ##          ##     ##  ##     ## ####  ## ##
+; ##       ##     ## ## ## ## ######     ##   #### ##     ##  ##     ######   ##     ## ## ## ## ##          ##     ##  ##     ## ## ## ##  ######
+; ##       ##     ## ##  #### ##         ##    ##  ##     ##  ##     ##       ##     ## ##  #### ##          ##     ##  ##     ## ##  ####       ##
+; ##    ## ##     ## ##   ### ##         ##    ##  ##     ##  ##     ##       ##     ## ##   ### ##    ##    ##     ##  ##     ## ##   ### ##    ##
+;  ######   #######  ##    ## ##          ######    #######  ####    ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
 
 ConfigGUIOpen(*) {
     ipRouterEdit.Value := ipRouter
@@ -1127,8 +1194,9 @@ ConfigGUIOpen(*) {
     ConfigGUICancelButton.Focus()
 }
 
-ConfigGUIReset(*){
-    msgResult := MsgBox("Tous la configuration va être réinitialisée aux valeurs par défaut.`n Confirmer ?", "Confirmation", 33)
+ConfigGUIReset(*) {
+    msgResult := MsgBox("Tous la configuration va être réinitialisée aux valeurs par défaut.`n Confirmer ?",
+        "Confirmation", 33)
     if (msgResult = "OK") {
         ipRouterEdit.Value := default_ipRouter
         usernameEdit.Value := default_username
@@ -1139,7 +1207,7 @@ ConfigGUIReset(*){
     }
 }
 
-ConfigGUIClose(*){
+ConfigGUIClose(*) {
     ConfigGUI.Hide()
 }
 
@@ -1195,8 +1263,91 @@ ConfigGUIValid(*) {
     ConfigGUI.Hide()
 }
 
-ConfigGUIOpenFile(*){
+ConfigGUIOpenFile(*) {
     Run("config.ini")
+}
+
+; ##       ####  ######  ########     ######   #######  ##    ## ########    ###     ######  ########  ######     ######## ##     ## ##    ##  ######
+; ##        ##  ##    ##    ##       ##    ## ##     ## ###   ##    ##      ## ##   ##    ##    ##    ##    ##    ##       ##     ## ###   ## ##    ##
+; ##        ##  ##          ##       ##       ##     ## ####  ##    ##     ##   ##  ##          ##    ##          ##       ##     ## ####  ## ##
+; ##        ##   ######     ##       ##       ##     ## ## ## ##    ##    ##     ## ##          ##     ######     ######   ##     ## ## ## ## ##
+; ##        ##        ##    ##       ##       ##     ## ##  ####    ##    ######### ##          ##          ##    ##       ##     ## ##  #### ##
+; ##        ##  ##    ##    ##       ##    ## ##     ## ##   ###    ##    ##     ## ##    ##    ##    ##    ##    ##       ##     ## ##   ### ##    ##
+; ######## ####  ######     ##        ######   #######  ##    ##    ##    ##     ##  ######     ##     ######     ##        #######  ##    ##  ######
+
+ContactsGUIOpen(*) {
+    LV_Contacts.Delete()
+    RefreshContactsArray()
+
+    if (contactsArray.Length > 0) {
+        for _, contactObj in contactsArray {
+            LV_Contacts.Add("", contactObj.name, contactObj.num)
+        }
+        LV_Contacts.ModifyCol() ; ajuste les colonnes
+    }
+
+    EditContactsGUI.Show()
+}
+
+; --- Fonctions helpers ---
+DeleteSelectedContact(LV_Contacts) {
+    Row := LV_Contacts.GetNext()
+    if Row
+        LV_Contacts.Delete(Row)
+}
+
+MoveContactRow(LV_Contacts, Dir) {
+    Row := LV_Contacts.GetNext()
+    if !Row
+        return
+    NewRow := Row + Dir
+    if NewRow < 1 || NewRow > LV_Contacts.GetCount()
+        return
+    contact := [LV_Contacts.GetText(Row, 1), LV_Contacts.GetText(Row, 2)]
+    LV_Contacts.Delete(Row)
+    LV_Contacts.Insert(NewRow, "", contact*)
+    LV_Contacts.Modify(NewRow, "Select Focus")
+}
+
+SaveContactsData(LV_Contacts) {
+    IniDelete("config.ini", "contacts")
+
+    saveError := "Saisie invalide :`n`n"
+    errorCount := 0
+
+    contactsCount := LV_Contacts.GetCount()
+
+    if (contactsCount = 0) {
+        IniWrite("", "config.ini", "contacts")
+    }
+    else {
+        ; Replace INI
+        loop contactsCount {
+            Row := A_Index
+            name := LV_Contacts.GetText(Row, 1)
+            num := LV_Contacts.GetText(Row, 2)
+            if (!name || !num || !IsPhoneNumber(num)) {
+                saveError .= name " - " num "`n"
+                errorCount++
+                continue
+            }
+            IniWrite(name, "config.ini", "contacts", num)
+        }
+    }
+
+    if (errorCount > 0) {
+        MsgBox(saveError)
+    } else {
+        EditContactsGUI.Hide()
+    }
+}
+
+AddAndSelectContact(LV_Contacts, EditInlineContactLV) {
+    LV_Contacts.Modify(0, "-Select")  ; désélectionne toutes les lignes
+    NewRow := LV_Contacts.Add("", "Nouveau", "") ; Ajouter une nouvelle ligne
+    LV_Contacts.ModifyCol() ; Redimenssionne
+    LV_Contacts.Modify(NewRow, "Select Focus") ; sélectionne la ligne
+    LV_Contacts.Focus()
 }
 
 ; ##     ## ########  ########     ###    ######## ########
