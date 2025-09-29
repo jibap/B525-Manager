@@ -84,11 +84,9 @@ if (InStr(windowsVersion, "10")) {
     dateIconID := "266"
     cancelIconID := "298"
     enableWifiIconID := "51"
-    settingsIconID := "72"
+    resetIconID := "240"
+    settingsIconID := "317"
     configFileIconID := "72"
-    helpIconID := "277"
-    moveUpIconID := "246"
-    moveDownIconID := "247"
 }
 
 ; Création d'une liste d'icones système pour la ListView
