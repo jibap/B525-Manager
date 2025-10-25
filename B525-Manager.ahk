@@ -154,7 +154,7 @@ trayMenu.add("Ouvrir la page Web", OpenWebPage)
 trayMenu.add("Ouvrir l'interface (double clic)", OpenListSMSGUI)
 trayMenu.add()
 trayMenu.add("Actualiser (clic droit)", Refresh)
-trayMenu.Default := "Ouvrir l'interface (double clic)"
+trayMenu.Default := "10&"
 
 trayMenu.SetIcon("1&", "shell32.dll", quitIconID)
 trayMenu.SetIcon("3&", "ddores.dll", enableWifiIconID)
