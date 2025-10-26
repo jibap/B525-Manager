@@ -1431,7 +1431,7 @@ CheckForUpdate(*) {
             MsgBox(
                 "La dernière version a bien été téléchargée, le logiciel va maintenant redémarrer pour valider la mise à jour...",
                 "Mise à jour")
-            Run(A_ScriptDir "\Updater.cmd")
+            Run(tempFile)
             ExitApp()
         }
     } else {
