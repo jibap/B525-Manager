@@ -9,6 +9,7 @@ if !A_IsCompiled || !IsSet(currentVersion){ ; fallback si non compilé
     currentVersion := "AHK_DIRECT" 
 }
 
+
 OnExit(ExitAppli)
 
 DllCall("AllocConsole")
@@ -16,6 +17,30 @@ WinHide("ahk_id " DllCall("GetConsoleWindow", "ptr"))
 
 SendMode("Input")  ;
 SetWorkingDir(A_ScriptDir)
+
+; AUTO UPDATE ?
+if (A_ScriptName = "B525-Manager-Update.exe") {
+    MsgBox("Mise à jour en cours, veuillez patienter...")
+
+    workingExe := "B525-Manager.exe"
+
+    ; Attendre fermeture de l’ancien EXE
+    while ProcessExist(workingExe)
+        Sleep 200
+
+    ; Renommer le fichier courant pour remplacer l’ancien
+    FileMove(A_ScriptFullPath, workingExe, 1)
+
+    ; Relancer l’app remplacée
+    Run(workingExe)
+
+    ExitApp
+}
+
+; nettoyage ancienne version, à supprimer un jour... 
+if FileExist("updater.cmd") {
+    FileDelete("updater.cmd")
+}
 
 OnMessage(0x404, ClicOnNotif) ; CLIC sur la notif pour ouvrir la GUI
 OnMessage(0x404, OnTrayClick) ; Capture les événements liés au Tray
@@ -30,7 +55,6 @@ FileInstall("medias\load.ico", "medias\load.ico", 1)
 FileInstall("medias\net.ico", "medias\net.ico", 1)
 
 FileInstall("B525-Manager.ps1", "B525-Manager.ps1", 1)
-FileInstall("updater.cmd", "updater.cmd", 1)
 
 if !FileExist("config.ini") {
     FileInstall("config.ini", "config.ini")
