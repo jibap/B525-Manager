@@ -179,7 +179,11 @@ trayMenu.add("Activer le Wifi", SwitchWifi)
 trayMenu.add("Envoyer un SMS", SendSMSGUIShow)
 trayMenu.add()
 trayMenu.add("Paramètres", ConfigGUIOpen)
-trayMenu.add("Vérifier la mise à jour", CheckForUpdate)
+if (IsSet(CheckForUpdate)) {
+    trayMenu.add("Vérifier la mise à jour", CheckForUpdate)
+}else{
+    trayMenu.add()
+}
 trayMenu.add()
 trayMenu.add("Ouvrir la page Web", OpenWebPage)
 trayMenu.add("Ouvrir l'interface (double clic)", OpenListSMSGUI)
@@ -1382,62 +1386,7 @@ AddAndSelectContact(LV_Contacts) {
     LV_Contacts.Focus()
 }
 
-; ##     ## ########  ########     ###    ######## ########
-; ##     ## ##     ## ##     ##   ## ##      ##    ##
-; ##     ## ##     ## ##     ##  ##   ##     ##    ##
-; ##     ## ########  ##     ## ##     ##    ##    ######
-; ##     ## ##        ##     ## #########    ##    ##
-; ##     ## ##        ##     ## ##     ##    ##    ##
-;  #######  ##        ########  ##     ##    ##    ########
-
-CheckForUpdate(*) {
-    ; Crée et configure l'objet HTTP
-    http := ComObject("WinHttp.WinHttpRequest.5.1")
-    http.Open("GET", "https://api.github.com/repos/jibap/B525-Manager/releases/latest", true)
-    http.Send()
-    http.WaitForResponse()
-
-    json := http.ResponseText
-
-    ; --- Extraire la version via Regex ---
-    if RegExMatch(json, '"tag_name"\s*:\s*"([^"]+)"', &m)
-        latestVersion := m[1]
-    else
-        latestVersion := ""
-
-    ; --- Comparer ---
-    if (latestVersion != "" && latestVersion != currentVersion) {
-        if MsgBox("Une nouvelle version est disponible: " latestVersion "`n`nMettre à jour maintenant ?", "Mise à jour",
-            4) = "Yes" {
-            ; --- Extraire l'URL de l'EXE (premier asset) ---
-            if RegExMatch(json, '"browser_download_url"\s*:\s*"([^"]+\.exe)"', &d)
-                downloadURL := d[1]
-            else
-                downloadURL := ""
-            ; Run(downloadURL)
-            ; Télécharger le fichier
-            tempFile := A_ScriptDir "\B525-Manager-Update.exe"
-            try {
-                Download downloadURL, tempFile
-            } catch as err {
-                MsgBox("Échec du téléchargement : " err.Message, "Erreur", 48)
-                return
-            }
-            ; vérifier si le fichier a été téléchargé
-            if !FileExist(tempFile) {
-                MsgBox("Le téléchargement de la mise à jour a échoué.", "Erreur", 48)
-                return
-            }
-            MsgBox(
-                "La dernière version a bien été téléchargée, le logiciel va maintenant redémarrer pour valider la mise à jour...",
-                "Mise à jour")
-            Run(tempFile)
-            ExitApp()
-        }
-    } else {
-        MsgBox "La version actuelle est la dernière (" currentVersion ").", "Mise à jour"
-    }
-}
+#Include "*i updater.ahk"
 
 ; ########  ##     ## ##    ##
 ; ##     ## ##     ## ###   ##
