@@ -3,6 +3,12 @@ Persistent
 #SingleInstance force ; Ecrase si instance en cours
 #Include <GuiCtrlTips>
 #Include <GuiEditListView>
+
+#Include "*i version.txt" ; utilisé lors de la compilation
+if !A_IsCompiled || !IsSet(currentVersion){ ; fallback si non compilé
+    currentVersion := "AHK_DIRECT" 
+}
+
 OnExit(ExitAppli)
 
 DllCall("AllocConsole")
@@ -24,14 +30,12 @@ FileInstall("medias\load.ico", "medias\load.ico", 1)
 FileInstall("medias\net.ico", "medias\net.ico", 1)
 
 FileInstall("B525-Manager.ps1", "B525-Manager.ps1", 1)
-FileInstall("version.txt", "version.txt", 1)
 FileInstall("updater.cmd", "updater.cmd", 1)
 
 if !FileExist("config.ini") {
     FileInstall("config.ini", "config.ini")
 }
 
-#Include "version.txt"
 
 ; #### ##    ## #### ########
 ;  ##  ###   ##  ##     ##
@@ -1370,7 +1374,7 @@ CheckForUpdate(*) {
     json := http.ResponseText
 
     ; --- Extraire la version via Regex ---
-    if RegExMatch(json, '"tag_name"\s*:\s*"([^"]+)"', &m)
+    if RegExMatch(json, '"tag_name"\s*:\s*"v?([^"]+)"', &m)
         latestVersion := m[1]
     else
         latestVersion := ""
