@@ -41,6 +41,9 @@ if (A_ScriptName = "B525-Manager-Update.exe") {
 if FileExist("updater.cmd") {
     FileDelete("updater.cmd")
 }
+if FileExist("version.txt") {
+    FileDelete("version.txt")
+}
 
 OnMessage(0x404, ClicOnNotif) ; CLIC sur la notif pour ouvrir la GUI
 OnMessage(0x404, OnTrayClick) ; Capture les événements liés au Tray
