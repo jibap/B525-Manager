@@ -1391,7 +1391,6 @@ AddAndSelectContact(LV_Contacts) {
 ;  #######  ##        ########  ##     ##    ##    ########
 
 CheckForUpdate(*) {
-    global currentVersion
     ; Crée et configure l'objet HTTP
     http := ComObject("WinHttp.WinHttpRequest.5.1")
     http.Open("GET", "https://api.github.com/repos/jibap/B525-Manager/releases/latest", true)
@@ -1401,7 +1400,7 @@ CheckForUpdate(*) {
     json := http.ResponseText
 
     ; --- Extraire la version via Regex ---
-    if RegExMatch(json, '"tag_name"\s*:\s*"v?([^"]+)"', &m)
+    if RegExMatch(json, '"tag_name"\s*:\s*"([^"]+)"', &m)
         latestVersion := m[1]
     else
         latestVersion := ""
