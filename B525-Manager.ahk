@@ -491,35 +491,24 @@ RefreshContactsArray() {
     }
 }
 
-lastClickTime := 0
-
 OnTrayClick(wParam, lParam, msg, hwnd) {
-    global trayMenu, lastClickTime
-
-    switch lParam {
-        case 0x201: ; clic gauche
-            now := A_TickCount
-            if (now - lastClickTime < 400) {
-                ; double clic
-                ListSMSGUIOpen()
-                lastClickTime := 0
-                return
-            }
-            lastClickTime := now
-            SetTimer(WaitForDoubleClick, -400)
-        case 0x204:
-        case 0x205: ; clic droit up
-            Refresh()
-            return true
+    if (lParam == 0x201) { ; Clic gauche up
+        SetTimer OnTraySingleClick, -250 ;
+        return 1
+    } else if (lParam == 0x203) { ; Double clic gauche
+        SetTimer OnTraySingleClick, 0 ; Annule le Timer du simple clic
+        ListSMSGUIOpen()
+        return 1
+    } else if (lParam == 0x205) { ; clic droit up
+        Refresh()
+        return 1
     }
+    ; Retourne 0 pour laisser AHK gérer les autres messages (comme le clic droit par défaut)
+    return 0
 }
 
-WaitForDoubleClick(*) {
-    global trayMenu, lastClickTime
-    if (!GuiIsActive() || lastClickTime == 0) {
-        trayMenu.Show()
-        lastClickTime := 0
-    }
+OnTraySingleClick() {
+    trayMenu.Show()
 }
 
 ; FONCTIONS POWERSHELL
