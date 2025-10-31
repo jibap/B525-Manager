@@ -5,10 +5,9 @@ Persistent
 #Include <GuiEditListView>
 
 #Include "*i version.txt" ; utilisé lors de la compilation
-if !A_IsCompiled || !IsSet(currentVersion){ ; fallback si non compilé
-    currentVersion := "AHK_DIRECT" 
+if !A_IsCompiled || !IsSet(currentVersion) { ; fallback si non compilé
+    currentVersion := "AHK_DIRECT"
 }
-
 
 OnExit(ExitAppli)
 
@@ -37,7 +36,7 @@ if (A_ScriptName = "B525-Manager-Update.exe") {
     ExitApp
 }
 
-; nettoyage ancienne version, à supprimer un jour... 
+; nettoyage ancienne version, à supprimer un jour...
 if FileExist("updater.cmd") {
     FileDelete("updater.cmd")
 }
@@ -62,7 +61,6 @@ FileInstall("B525-Manager.ps1", "B525-Manager.ps1", 1)
 if !FileExist("config.ini") {
     FileInstall("config.ini", "config.ini")
 }
-
 
 ; #### ##    ## #### ########
 ;  ##  ###   ##  ##     ##
@@ -147,6 +145,7 @@ if (!password || Type(password) != "String") {
 }
 
 ; Force les valeurs par défaut (y compris dans le config.ini) si invalide
+; AUTO_WIFI_OFF_STATUS
 default_autoWifiOffStatus := "0"
 autoWifiOffStatus := IniRead("config.ini", "main", "AUTO_WIFI_OFF_STATUS", default_autoWifiOffStatus)
 autoWifiOffStatus := autoWifiOffStatus + 0 ; force en entier
@@ -154,11 +153,27 @@ if (!autoWifiOffStatus || !IsBoolean(autoWifiOffStatus)) {
     autoWifiOffStatus := default_autoWifiOffStatus + 0 ; force en entier
     IniWrite(autoWifiOffStatus, "config.ini", "main", "AUTO_WIFI_OFF_STATUS")
 }
-default_autoWifiOff := "18:00"
+; AUTO_WIFI_OFF
+default_autoWifiOff := "19:00"
 autoWifiOff := IniRead("config.ini", "main", "AUTO_WIFI_OFF", default_autoWifiOff)
 if (!autoWifiOff || !RegExMatch(autoWifiOff, "^\d{2}:\d{2}$")) {
     autoWifiOff := default_autoWifiOff
     IniWrite(autoWifiOff, "config.ini", "main", "AUTO_WIFI_OFF")
+}
+; AUTO_WIFI_ON_STATUS
+default_autoWifiOnStatus := "0"
+autoWifiOnStatus := IniRead("config.ini", "main", "AUTO_WIFI_ON_STATUS", default_autoWifiOnStatus)
+autoWifiOnStatus := autoWifiOnStatus + 0 ; force en entier
+if (!autoWifiOnStatus || !IsBoolean(autoWifiOnStatus)) {
+    autoWifiOnStatus := default_autoWifiOnStatus + 0 ; force en entier
+    IniWrite(autoWifiOnStatus, "config.ini", "main", "AUTO_WIFI_ON_STATUS")
+}
+; AUTO_WIFI_ON
+default_autoWifiOn := "09:00"
+autoWifiOn := IniRead("config.ini", "main", "AUTO_WIFI_ON", default_autoWifiOn)
+if (!autoWifiOn || !RegExMatch(autoWifiOn, "^\d{2}:\d{2}$")) {
+    autoWifiOn := default_autoWifiOn
+    IniWrite(autoWifiOn, "config.ini", "main", "AUTO_WIFI_ON")
 }
 default_loopDelay := "5m"
 loopDelay := IniRead("config.ini", "main", "DELAY", default_loopDelay)
@@ -181,7 +196,7 @@ trayMenu.add()
 trayMenu.add("Paramètres", ConfigGUIOpen)
 if (IsSet(CheckForUpdate)) {
     trayMenu.add("Vérifier la mise à jour", CheckForUpdate)
-}else{
+} else {
     trayMenu.add()
 }
 trayMenu.add()
@@ -357,7 +372,7 @@ SetButtonIcon(passwordHelp, "shell32.dll", helpIconID, 20)
 ConfigGUI.Tips.SetTip(passwordHelp, "par défaut : adminBox")
 
 ConfigGUI.SetFont("w700", "Segoe UI")
-ConfigGUI.Add("GroupBox", "section xs y130 w300 h80", "Options")
+ConfigGUI.Add("GroupBox", "section xs y130 w300 h110", "Options")
 ConfigGUI.SetFont("w400", "Segoe UI")
 
 ConfigGUI.Add("Text", "xs+10 ys+20", "Actualisation :")
@@ -366,13 +381,19 @@ delayHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
 SetButtonIcon(delayHelp, "shell32.dll", helpIconID, 20)
 ConfigGUI.Tips.SetTip(delayHelp, "par défaut : 5m ▶ Période exprimée en s (secondes), m (minutes) ou h (heures)")
 
-ConfigGUI.Add("Text", "xs+10 y+15", "Extinction automatique du Wifi à ")
+ConfigGUI.Add("Text", "xs+10 y+15", "Activation automatique du Wifi à ")
+autoWifiOnEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm",)
+autoWifiOnEdit.Value := TimeToDateTimeValue(autoWifiOn)
+autoWifiOnStatusCB := ConfigGUI.Add("CheckBox", "x+10 yp+5", "Activé ")
+autoWifiOnStatusCB.Value := autoWifiOnStatus
+
+ConfigGUI.Add("Text", "xs+10 y+15", "Désactivation automatique du Wifi à ")
 autoWifiOffEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm",)
 autoWifiOffEdit.Value := TimeToDateTimeValue(autoWifiOff)
 autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "x+10 yp+5", "Activé ")
 autoWifiOffStatusCB.Value := autoWifiOffStatus
 
-ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 y+40 r2 +0x40 +0x0C", A_Space)
+ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 y+20 r2 +0x40 +0x0C", A_Space)
 ConfigGUI.Tips.SetTip(ConfigGUIResetButton, "Réinitialiser avec les valeurs par défaut")
 SetButtonIcon(ConfigGUIResetButton, "imageres.dll", resetIconID, 20)
 ConfigGUIResetButton.OnEvent("Click", ConfigGUIReset)
@@ -442,7 +463,7 @@ EditInlineContactLV := LVEditInline(LV_Contacts)
 ; ##       ##     ## ##   ### ##    ##    ##     ##  ##     ## ##   ### ##    ##
 ; ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
 
-initTips(GUIObj){
+initTips(GUIObj) {
     GUIObj.Tips := GuiCtrlTips(GUIObj)
     GUIObj.Tips.SetBkColor(0xFFFFFF)
     GUIObj.Tips.SetTxColor(0x404040)
@@ -607,18 +628,25 @@ SetTrayIcon(iconName) {
     TraySetIcon(iconFile)
 }
 
-CheckForWifiAutoOff() {
-    ; Si Wifi allumé
-    if (wifiStatus = 1) {
-        ; Si Wifi AutoOff activé
-        if (autoWifiOffStatus = 1) {
-            ; Récupérer l'heure actuelle
-            currentTime := FormatTime(, "HHmm")
-            autoWifiOffTime := StrReplace(autoWifiOff, ":", "")
-            if (currentTime >= autoWifiOffTime) {
-                SwitchWifi()
-            }
-        }
+CheckForWifiAuto() {
+    currentTime := FormatTime(, "HHmm")
+    autoWifiOffTime := StrReplace(autoWifiOff, ":", "")
+    autoWifiOnTime := StrReplace(autoWifiOn, ":", "")
+    isNightInterval := (autoWifiOffTime > autoWifiOnTime) ; VRAI si la coupure (OFF) traverse minuit
+    
+    ; --- Détermine si on est dans le créneau OFF ---
+    if (isNightInterval) {
+        isTimeForOff := (currentTime >= autoWifiOffTime) || (currentTime < autoWifiOnTime)
+    } else {
+        isTimeForOff := (currentTime >= autoWifiOffTime) && (currentTime < autoWifiOnTime)
+    }
+
+    ; --- Actions ---
+    if (
+        (wifiStatus = 1 && autoWifiOffStatus = 1 && isTimeForOff) ||
+        (wifiStatus = 0 && autoWifiOnStatus = 1 && !isTimeForOff)
+    ) {
+        SwitchWifi()
     }
 }
 
@@ -872,7 +900,7 @@ Refresh(*) {
         if (!quiet) {
             TextInfo.Value := ""
         }
-        CheckForWifiAutoOff()
+        CheckForWifiAuto()
         refreshing := false
     }
 }
@@ -1165,7 +1193,7 @@ SendSMSGUISend(*) {
         return
     }
 
-    if(DDLContactChoice.Text != ""){
+    if (DDLContactChoice.Text != "") {
         dest := "à " . DDLContactChoice.Text
     } else {
         dest := "au " . numberDest.Text
@@ -1211,6 +1239,8 @@ ConfigGUIOpen(*) {
     delayEdit.Value := loopDelay
     autoWifiOffEdit.Value := TimeToDateTimeValue(autoWifiOff)
     autoWifiOffStatusCB.Value := autoWifiOffStatus
+    autoWifiOnEdit.Value := TimeToDateTimeValue(autoWifiOn)
+    autoWifiOnStatusCB.Value := autoWifiOnStatus
 
     ConfigGUI.Show()
     ConfigGUICancelButton.Focus()
@@ -1226,6 +1256,8 @@ ConfigGUIReset(*) {
         delayEdit.Value := default_loopDelay
         autoWifiOffEdit.Value := TimeToDateTimeValue(default_autoWifiOff)
         autoWifiOffStatusCB.Value := default_autoWifiOffStatus
+        autoWifiOnEdit.Value := TimeToDateTimeValue(default_autoWifiOn)
+        autoWifiOnStatusCB.Value := default_autoWifiOnStatus
     }
 }
 
@@ -1234,13 +1266,14 @@ ConfigGUIClose(*) {
 }
 
 ConfigGUIValid(*) {
-    global ipRouter, username, password, loopDelay, autoWifiOff, autoWifiOffStatus
+    global ipRouter, username, password, loopDelay, autoWifiOff, autoWifiOffStatus, autoWifiOn, autoWifiOnStatus
 
     tmpIP := ipRouterEdit.Value
     tmpUsername := usernameEdit.Value
     tmpPassword := passwordEdit.Value
     tmpDelay := Trim(delayEdit.Value)
     tmpAutoWifiOff := DateTimeValueToTime(autoWifiOffEdit.Value)
+    tmpAutoWifiOn := DateTimeValueToTime(autoWifiOnEdit.Value)
 
     ; Vérifications bloquantes
     if (!ValidIP(tmpIP)) {
@@ -1264,7 +1297,12 @@ ConfigGUIValid(*) {
     }
 
     if (!RegExMatch(tmpAutoWifiOff, "^\d{2}:\d{2}$")) {
-        MsgBox("L'heure d'extinction doit être au format HH:MM.", "Erreur", 48)
+        MsgBox("L'heure de désactivation doit être au format HH:MM.", "Erreur", 48)
+        return
+    }
+
+    if (!RegExMatch(tmpAutoWifiOn, "^\d{2}:\d{2}$")) {
+        MsgBox("L'heure de d'activation doit être au format HH:MM.", "Erreur", 48)
         return
     }
 
@@ -1274,6 +1312,8 @@ ConfigGUIValid(*) {
     loopDelay := tmpDelay
     autoWifiOff := tmpAutoWifiOff
     autoWifiOffStatus := autoWifiOffStatusCB.Value + 0
+    autoWifiOn := tmpAutoWifiOn
+    autoWifiOnStatus := autoWifiOnStatusCB.Value + 0
 
     IniWrite(ipRouter, "config.ini", "main", "ROUTER_IP")
     IniWrite(username, "config.ini", "main", "ROUTER_USERNAME")
@@ -1281,6 +1321,8 @@ ConfigGUIValid(*) {
     IniWrite(loopDelay, "config.ini", "main", "DELAY")
     IniWrite(autoWifiOff, "config.ini", "main", "AUTO_WIFI_OFF")
     IniWrite(autoWifiOffStatus, "config.ini", "main", "AUTO_WIFI_OFF_STATUS")
+    IniWrite(autoWifiOn, "config.ini", "main", "AUTO_WIFI_ON")
+    IniWrite(autoWifiOnStatus, "config.ini", "main", "AUTO_WIFI_ON_STATUS")
 
     ConfigGUI.Hide()
 }
