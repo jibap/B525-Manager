@@ -9,45 +9,19 @@ if !A_IsCompiled || !IsSet(currentVersion) { ; fallback si non compilé
     currentVersion := "AHK_DIRECT"
 }
 
-OnExit(ExitAppli)
-
 DllCall("AllocConsole")
 WinHide("ahk_id " DllCall("GetConsoleWindow", "ptr"))
+
+OnMessage(0x404, OnTrayClick) ; Capture les événements liés au Tray
+OnMessage(0x404, ClicOnNotif) ; CLIC sur la notif pour ouvrir la GUI
 
 SendMode("Input")  ;
 SetWorkingDir(A_ScriptDir)
 
-; AUTO UPDATE ?
-if (A_ScriptName = "B525-Manager-Update.exe") {
-    MsgBox("Mise à jour en cours, veuillez patienter...")
-
-    workingExe := "B525-Manager.exe"
-
-    ; Attendre fermeture de l’ancien EXE
-    while ProcessExist(workingExe)
-        Sleep 200
-
-    ; Renommer le fichier courant pour remplacer l’ancien
-    FileMove(A_ScriptFullPath, workingExe, 1)
-
-    ; Relancer l’app remplacée
-    Run(workingExe)
-
-    ExitApp
-}
-
-; nettoyage ancienne version, à supprimer un jour...
-if FileExist("updater.cmd") {
-    FileDelete("updater.cmd")
-}
-if FileExist("version.txt") {
-    FileDelete("version.txt")
-}
-
-OnMessage(0x404, ClicOnNotif) ; CLIC sur la notif pour ouvrir la GUI
-OnMessage(0x404, OnTrayClick) ; Capture les événements liés au Tray
-
 psShell := "" ; Initialisation de la variable globale pour eviter erreur onExit()
+OnExit(ExitAppli)
+
+#Include "*i updater.ahk" ; gestion des mises à jour
 
 ; IMPORT / EXPORT des fichiers annexes pour version compilée
 DirCreate("medias")
@@ -551,18 +525,10 @@ SendToPS(command) {
 
 ClosePS(*) {  ; Fonction pour fermer proprement le PowerShell
     global psShell
-    if (psShell) {
-        try {
-            psShell.StdIn.WriteLine("exit")  ; Ferme la session PowerShell
-        } catch {
-            ; Ignore l'erreur si PS est déjà en train de se fermer
-        }
-        try {
-            psShell.Terminate()
-        } catch {
-            ; Ignore si déjà fermé
-        }
-        psShell := ""  ; Libère l'objet
+    if IsSet(psShell) && IsObject(psShell) {
+        try psShell.StdIn.WriteLine("exit")
+        try psShell.Terminate()
+        psShell := ""
     }
 }
 
@@ -1416,8 +1382,6 @@ AddAndSelectContact(LV_Contacts) {
     LV_Contacts.Modify(NewRow, "Select Focus") ; sélectionne la ligne
     LV_Contacts.Focus()
 }
-
-#Include "*i updater.ahk"
 
 ; ########  ##     ## ##    ##
 ; ##     ## ##     ## ###   ##
