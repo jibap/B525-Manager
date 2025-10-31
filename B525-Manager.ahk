@@ -628,7 +628,7 @@ SetTrayIcon(iconName) {
     TraySetIcon(iconFile)
 }
 
-CheckForWifiAuto() {
+CheckForWifiAutoSwitch() {
     currentTime := FormatTime(, "HHmm")
     autoWifiOffTime := StrReplace(autoWifiOff, ":", "")
     autoWifiOnTime := StrReplace(autoWifiOn, ":", "")
@@ -900,7 +900,7 @@ Refresh(*) {
         if (!quiet) {
             TextInfo.Value := ""
         }
-        CheckForWifiAuto()
+        CheckForWifiAutoSwitch()
         refreshing := false
     }
 }
