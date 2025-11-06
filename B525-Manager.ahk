@@ -156,37 +156,6 @@ if (!loopDelay || !RegExMatch(loopDelay, "i)^\d+[smh]$")) {
     IniWrite(loopDelay, "config.ini", "main", "DELAY")
 }
 
-SetTrayIcon("noSMS")
-
-; CREATION DU TRAYMENU
-; *********************
-trayMenu := A_TrayMenu
-trayMenu.Delete() ; Supprime les menus par défaut
-trayMenu.add("Quitter l'application", ExitAppli)
-trayMenu.add()
-trayMenu.add("Activer le Wifi", SwitchWifi)
-trayMenu.add("Envoyer un SMS", SendSMSGUIShow)
-trayMenu.add()
-trayMenu.add("Paramètres", ConfigGUIOpen)
-if (IsSet(CheckForUpdate)) {
-    trayMenu.add("Vérifier la mise à jour", CheckForUpdate)
-} else {
-    trayMenu.add()
-}
-trayMenu.add()
-trayMenu.add("Ouvrir la page Web", OpenWebPage)
-trayMenu.add("Ouvrir l'interface (double clic)", OpenListSMSGUI)
-trayMenu.add()
-trayMenu.add("Actualiser (clic droit)", Refresh)
-trayMenu.Default := "10&"
-
-trayMenu.SetIcon("1&", "shell32.dll", quitIconID)
-trayMenu.SetIcon("3&", "ddores.dll", enableWifiIconID)
-trayMenu.SetIcon("4&", "shell32.dll", sendSMSIconID)
-trayMenu.SetIcon("6&", "shell32.dll", settingsIconID)
-trayMenu.SetIcon("9&", "shell32.dll", openWebPageIconID)
-trayMenu.SetIcon("12&", "shell32.dll", refreshIconID)
-
 ; ##       ####  ######  ########     ######  ##     ##  ######      ######   ##     ## ####
 ; ##        ##  ##    ##    ##       ##    ## ###   ### ##    ##    ##    ##  ##     ##  ##
 ; ##        ##  ##          ##       ##       #### #### ##          ##        ##     ##  ##
@@ -428,6 +397,45 @@ EditContactsGUI.OnEvent("Close", (*) => EditContactsGUI.Hide())
 
 ; Attacher l'édition inline
 EditInlineContactLV := LVEditInline(LV_Contacts)
+
+; ######## ########     ###    ##    ## ##     ## ######## ##    ## ##     ## 
+;    ##    ##     ##   ## ##    ##  ##  ###   ### ##       ###   ## ##     ## 
+;    ##    ##     ##  ##   ##    ####   #### #### ##       ####  ## ##     ## 
+;    ##    ########  ##     ##    ##    ## ### ## ######   ## ## ## ##     ## 
+;    ##    ##   ##   #########    ##    ##     ## ##       ##  #### ##     ## 
+;    ##    ##    ##  ##     ##    ##    ##     ## ##       ##   ### ##     ## 
+;    ##    ##     ## ##     ##    ##    ##     ## ######## ##    ##  #######  
+
+SetTrayIcon("noSMS")
+
+; CREATION DU TRAYMENU
+; *********************
+trayMenu := A_TrayMenu
+trayMenu.Delete() ; Supprime les menus par défaut
+trayMenu.add("Quitter l'application", ExitAppli)
+trayMenu.add()
+trayMenu.add("Activer le Wifi", SwitchWifi)
+trayMenu.add("Envoyer un SMS", SendSMSGUIShow)
+trayMenu.add()
+trayMenu.add("Paramètres", ConfigGUIOpen)
+if (IsSet(CheckForUpdate)) {
+    trayMenu.add("Vérifier la mise à jour", CheckForUpdate)
+} else {
+    trayMenu.add()
+}
+trayMenu.add()
+trayMenu.add("Ouvrir la page Web", OpenWebPage)
+trayMenu.add("Ouvrir l'interface (double clic)", OpenListSMSGUI)
+trayMenu.add()
+trayMenu.add("Actualiser (clic droit)", Refresh)
+trayMenu.Default := "10&"
+
+trayMenu.SetIcon("1&", "shell32.dll", quitIconID)
+trayMenu.SetIcon("3&", "ddores.dll", enableWifiIconID)
+trayMenu.SetIcon("4&", "shell32.dll", sendSMSIconID)
+trayMenu.SetIcon("6&", "shell32.dll", settingsIconID)
+trayMenu.SetIcon("9&", "shell32.dll", openWebPageIconID)
+trayMenu.SetIcon("12&", "shell32.dll", refreshIconID)
 
 ; ######## ##     ## ##    ##  ######  ######## ####  #######  ##    ##  ######
 ; ##       ##     ## ###   ## ##    ##    ##     ##  ##     ## ###   ## ##    ##
