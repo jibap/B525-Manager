@@ -87,7 +87,7 @@ if (InStr(windowsVersion, "10")) {
     dateIconID := "266"
     cancelIconID := "298"
     enableWifiIconID := "51"
-    resetIconID := "240"
+    resetIconID := "270"
     settingsIconID := "317"
     configFileIconID := "72"
 }
