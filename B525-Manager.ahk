@@ -315,7 +315,7 @@ SetButtonIcon(passwordHelp, "shell32.dll", helpIconID, 20)
 ConfigGUI.Tips.SetTip(passwordHelp, "par défaut : adminBox")
 
 ConfigGUI.SetFont("w700", "Segoe UI")
-ConfigGUI.Add("GroupBox", "section xs y130 w300 h110", "Options")
+ConfigGUI.Add("GroupBox", "section xs y120 w300 h110", "Options")
 ConfigGUI.SetFont("w400", "Segoe UI")
 
 ConfigGUI.Add("Text", "xs+10 ys+20", "Actualisation :")
@@ -324,17 +324,18 @@ delayHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
 SetButtonIcon(delayHelp, "shell32.dll", helpIconID, 20)
 ConfigGUI.Tips.SetTip(delayHelp, "par défaut : 5m ▶ Période exprimée en s (secondes), m (minutes) ou h (heures)")
 
-ConfigGUI.Add("Text", "xs+10 y+15", "Activation automatique du Wifi à ")
+autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "xs+10 y+15", "Désactivation du Wifi")
+autoWifiOffStatusCB.Value := autoWifiOffStatus
+
+ConfigGUI.Add("Text", "x+0 ", "entre : ")
+autoWifiOffEdit := ConfigGUI.Add("DateTime", "x+5 w50 yp-5 1", "HH:mm",)
+autoWifiOffEdit.Value := TimeToDateTimeValue(autoWifiOff)
+ConfigGUI.Add("Text", "x+5 yp+5", "et : ")
 autoWifiOnEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm",)
 autoWifiOnEdit.Value := TimeToDateTimeValue(autoWifiOn)
-autoWifiOnStatusCB := ConfigGUI.Add("CheckBox", "x+10 yp+5", "Activé ")
-autoWifiOnStatusCB.Value := autoWifiOnStatus
 
-ConfigGUI.Add("Text", "xs+10 y+15", "Désactivation automatique du Wifi à ")
-autoWifiOffEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm",)
-autoWifiOffEdit.Value := TimeToDateTimeValue(autoWifiOff)
-autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "x+10 yp+5", "Activé ")
-autoWifiOffStatusCB.Value := autoWifiOffStatus
+autoWifiOnStatusCB := ConfigGUI.Add("CheckBox", "xs+10 y+15", "Activation du Wifi sur le créneau inverse ?")
+autoWifiOnStatusCB.Value := autoWifiOnStatus
 
 ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 y+20 r2 +0x40 +0x0C", A_Space)
 ConfigGUI.Tips.SetTip(ConfigGUIResetButton, "Réinitialiser avec les valeurs par défaut")
