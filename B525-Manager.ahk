@@ -327,14 +327,14 @@ ConfigGUI.Tips.SetTip(delayHelp, "par défaut : 5m ▶ Période exprimée en s (
 autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "xs+10 y+15", "Désactivation du Wifi")
 autoWifiOffStatusCB.Value := autoWifiOffStatus
 
-ConfigGUI.Add("Text", "x+0 ", "entre : ")
+ConfigGUI.Add("Text", "x+0 ", "de")
 autoWifiOffEdit := ConfigGUI.Add("DateTime", "x+5 w50 yp-5 1", "HH:mm",)
 autoWifiOffEdit.Value := TimeToDateTimeValue(autoWifiOff)
-ConfigGUI.Add("Text", "x+5 yp+5", "et : ")
-autoWifiOnEdit := ConfigGUI.Add("DateTime", "x+0 w50 yp-5 1", "HH:mm",)
+ConfigGUI.Add("Text", "x+5 yp+5", "à")
+autoWifiOnEdit := ConfigGUI.Add("DateTime", "x+5 w50 yp-5 1", "HH:mm",)
 autoWifiOnEdit.Value := TimeToDateTimeValue(autoWifiOn)
 
-autoWifiOnStatusCB := ConfigGUI.Add("CheckBox", "xs+10 y+15", "Activation du Wifi sur le créneau inverse ?")
+autoWifiOnStatusCB := ConfigGUI.Add("CheckBox", "xs+10 y+15", "Activation du Wifi sur le créneau inverse")
 autoWifiOnStatusCB.Value := autoWifiOnStatus
 
 ConfigGUIResetButton := ConfigGUI.Add("Button", "section xs w35 y+20 r2 +0x40 +0x0C", A_Space)
