@@ -13,7 +13,6 @@ DllCall("AllocConsole")
 WinHide("ahk_id " DllCall("GetConsoleWindow", "ptr"))
 
 OnMessage(0x404, OnTrayClick) ; Capture les événements liés au Tray
-OnMessage(0x404, ClicOnNotif) ; CLIC sur la notif pour ouvrir la GUI
 
 SendMode("Input")  ;
 SetWorkingDir(A_ScriptDir)
@@ -52,6 +51,7 @@ helpText :=
 refreshing := false
 contactsArray := Array()
 ignoreDestEdit := false
+refuseUpdate := false
 
 ; ICONES
 validIconID := "301"
@@ -419,24 +419,19 @@ trayMenu.add("Activer le Wifi", SwitchWifi)
 trayMenu.add("Envoyer un SMS", SendSMSGUIShow)
 trayMenu.add()
 trayMenu.add("Paramètres", ConfigGUIOpen)
-if (IsSet(CheckForUpdate)) {
-    trayMenu.add("Vérifier la mise à jour", CheckForUpdate)
-} else {
-    trayMenu.add()
-}
 trayMenu.add()
 trayMenu.add("Ouvrir la page Web", OpenWebPage)
-trayMenu.add("Ouvrir l'interface (double clic)", OpenListSMSGUI)
+trayMenu.add("Ouvrir l'interface (double clic)", ListSMSGUIOpen)
 trayMenu.add()
-trayMenu.add("Actualiser (clic droit)", Refresh)
-trayMenu.Default := "10&"
+trayMenu.add("Actualiser (clic droit)", Refresh) 
+trayMenu.Default := "9&" ; uniquement pour mettre en gras car les actions sont gérées par OnTrayClick
 
 trayMenu.SetIcon("1&", "shell32.dll", quitIconID)
 trayMenu.SetIcon("3&", "ddores.dll", enableWifiIconID)
 trayMenu.SetIcon("4&", "shell32.dll", sendSMSIconID)
 trayMenu.SetIcon("6&", "shell32.dll", settingsIconID)
-trayMenu.SetIcon("9&", "shell32.dll", openWebPageIconID)
-trayMenu.SetIcon("12&", "shell32.dll", refreshIconID)
+trayMenu.SetIcon("8&", "shell32.dll", openWebPageIconID)
+trayMenu.SetIcon("11&", "shell32.dll", refreshIconID)
 
 ; ######## ##     ## ##    ##  ######  ######## ####  #######  ##    ##  ######
 ; ##       ##     ## ###   ## ##    ##    ##     ##  ##     ## ###   ## ##    ##
@@ -496,6 +491,8 @@ RefreshContactsArray() {
 }
 
 OnTrayClick(wParam, lParam, msg, hwnd) {
+    if (hwnd != A_ScriptHwnd || lParam == 512) ; Survol de l'icône ou pas le bon hwnd
+        return
     if (lParam == 0x201) { ; Clic gauche up
         SetTimer OnTraySingleClick, -250 ;
         return 1
@@ -505,6 +502,9 @@ OnTrayClick(wParam, lParam, msg, hwnd) {
         return 1
     } else if (lParam == 0x205) { ; clic droit up
         Refresh()
+        return 1
+    } else if (lParam == 1029) { ; clic sur notification
+        ListSMSGUIOpen()
         return 1
     }
     ; Retourne 0 pour laisser AHK gérer les autres messages (comme le clic droit par défaut)
@@ -539,14 +539,6 @@ ClosePS(*) {  ; Fonction pour fermer proprement le PowerShell
         try psShell.Terminate()
         psShell := ""
     }
-}
-
-; Fonction qui permets de cliquer sur la notif Windows pour ouvrir la GUI
-ClicOnNotif(wParam, lParam, msg, hwnd) {
-    if (hwnd != A_ScriptHwnd)
-        return
-    if (lParam = 1029)
-        ListSMSGUIOpen()
 }
 
 ; Permet de valider une IP
@@ -888,7 +880,8 @@ Refresh(*) {
 ; ##        ##  ##    ##    ##      ##       ##     ## ##   ### ##    ##    ##     ##  ##     ## ##   ### ##    ##
 ; ######## ####  ######     ##      ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
 
-ListSMSGUIOpen() {
+ListSMSGUIOpen(*) {
+    CheckForUpdate()
     ListSMSGUI.Show()
 }
 
@@ -937,10 +930,6 @@ CreateSmsList(boxType, SMSList) {
             messages := SMSList.nextNode
         }
     }
-}
-
-OpenListSMSGUI(*) {
-    ListSMSGUIOpen()
 }
 
 ListSMSRightClick(LV_SMS, SelectedRowNumber, *) {
@@ -1208,6 +1197,10 @@ SendSMSGUISend(*) {
 ;  ######   #######  ##    ## ##          ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
 
 ConfigGUIOpen(*) {
+    global refuseUpdate 
+    refuseUpdate := false
+    CheckForUpdate()
+
     ipRouterEdit.Value := ipRouter
     usernameEdit.Value := username
     passwordEdit.Value := password
