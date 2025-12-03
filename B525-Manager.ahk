@@ -119,6 +119,8 @@ if (!password || Type(password) != "String") {
 }
 
 ; Force les valeurs par défaut (y compris dans le config.ini) si invalide
+isTimeForOff := false
+wifiForcedPeriod := false
 ; AUTO_WIFI_OFF_STATUS
 default_autoWifiOffStatus := "0"
 autoWifiOffStatus := IniRead("config.ini", "main", "AUTO_WIFI_OFF_STATUS", default_autoWifiOffStatus)
@@ -399,13 +401,13 @@ EditContactsGUI.OnEvent("Close", (*) => EditContactsGUI.Hide())
 ; Attacher l'édition inline
 EditInlineContactLV := LVEditInline(LV_Contacts)
 
-; ######## ########     ###    ##    ## ##     ## ######## ##    ## ##     ## 
-;    ##    ##     ##   ## ##    ##  ##  ###   ### ##       ###   ## ##     ## 
-;    ##    ##     ##  ##   ##    ####   #### #### ##       ####  ## ##     ## 
-;    ##    ########  ##     ##    ##    ## ### ## ######   ## ## ## ##     ## 
-;    ##    ##   ##   #########    ##    ##     ## ##       ##  #### ##     ## 
-;    ##    ##    ##  ##     ##    ##    ##     ## ##       ##   ### ##     ## 
-;    ##    ##     ## ##     ##    ##    ##     ## ######## ##    ##  #######  
+; ######## ########     ###    ##    ## ##     ## ######## ##    ## ##     ##
+;    ##    ##     ##   ## ##    ##  ##  ###   ### ##       ###   ## ##     ##
+;    ##    ##     ##  ##   ##    ####   #### #### ##       ####  ## ##     ##
+;    ##    ########  ##     ##    ##    ## ### ## ######   ## ## ## ##     ##
+;    ##    ##   ##   #########    ##    ##     ## ##       ##  #### ##     ##
+;    ##    ##    ##  ##     ##    ##    ##     ## ##       ##   ### ##     ##
+;    ##    ##     ## ##     ##    ##    ##     ## ######## ##    ##  #######
 
 SetTrayIcon("noSMS")
 
@@ -423,7 +425,7 @@ trayMenu.add()
 trayMenu.add("Ouvrir la page Web", OpenWebPage)
 trayMenu.add("Ouvrir l'interface (double clic)", ListSMSGUIOpen)
 trayMenu.add()
-trayMenu.add("Actualiser (clic droit)", Refresh) 
+trayMenu.add("Actualiser (clic droit)", Refresh)
 trayMenu.Default := "9&" ; uniquement pour mettre en gras car les actions sont gérées par OnTrayClick
 
 trayMenu.SetIcon("1&", "shell32.dll", quitIconID)
@@ -596,11 +598,12 @@ SetTrayIcon(iconName) {
 }
 
 CheckForWifiAutoSwitch() {
+    global isTimeForOff, wifiForcedPeriod
     currentTime := FormatTime(, "HHmm")
     autoWifiOffStartTime := StrReplace(autoWifiOffStart, ":", "")
     autoWifiOffEndTime := StrReplace(autoWifiOffEnd, ":", "")
     isNightInterval := (autoWifiOffStartTime > autoWifiOffEndTime) ; VRAI si la coupure (OFF) traverse minuit
-    
+
     ; --- Détermine si on est dans le créneau OFF ---
     if (isNightInterval) {
         isTimeForOff := (currentTime >= autoWifiOffStartTime) || (currentTime < autoWifiOffEndTime)
@@ -608,10 +611,22 @@ CheckForWifiAutoSwitch() {
         isTimeForOff := (currentTime >= autoWifiOffStartTime) && (currentTime < autoWifiOffEndTime)
     }
 
+    ; --- levée automatique de l’exception ---
+    if (
+        wifiForcedPeriod && (
+            (isTimeForOff && wifiStatus = 0) ||
+            (!isTimeForOff && wifiStatus = 1)
+        )
+    ) {
+        wifiForcedPeriod := false
+    }
+
     ; --- Actions ---
     if (
-        (wifiStatus = 1 && autoWifiOffStatus = 1 && isTimeForOff) ||
-        (wifiStatus = 0 && autoWifiOnStatus = 1 && !isTimeForOff)
+        !wifiForcedPeriod && (
+            (wifiStatus = 1 && autoWifiOffStatus = 1 && isTimeForOff) ||
+            (wifiStatus = 0 && autoWifiOnStatus = 1 && !isTimeForOff)
+        )
     ) {
         SwitchWifi()
     }
@@ -705,25 +720,40 @@ GetXMLValue(xml, pattern, default := 0) {
 
 SwitchWifi(*) {
     if (BoxIsReachable(true)) {
-        global wifiStatus
-
+        global wifiStatus, wifiForcedPeriod
+        ; Désactive les controles pendant l'opération
         SwitchWifiButton.Enabled := false
         trayMenu.Disable("3&") ; Wifi
 
         if (wifiStatus = 1) {
+            ; Vérifie si on est dans une plage d'activation automatique
+            if (!isTimeForOff && autoWifiOnStatus = 1) {
+                MsgBox(
+                    "Le WIFI est planifié pour être activé automatiquement à cette heure.`n`nLa désactivation va être forcée et la programmation automatique reprendra à la fin du créneau.",
+                    "BOX 4G - Désactivation du WIFI forcée", "OK Iconi")
+                wifiForcedPeriod := true
+            }
             TrayTip("Désactivation du WIFI...", "BOX 4G", 36)
             RunBoxCmd("deactivate-wifi")
         } else {
+            ; Vérifie si on est dans une plage de désactivation automatique
+            if (isTimeForOff && autoWifiOffStatus = 1) {
+                MsgBox(
+                    "Le WIFI est planifié pour être désactivé automatiquement à cette heure.`n`nL'activation va être forcée et la programmation automatique reprendra à la fin du créneau.",
+                    "BOX 4G - Activation du WIFI forcée", "OK Iconi")
+                wifiForcedPeriod := true
+            }
             TrayTip("Activation du WIFI...", "BOX 4G", 36)
             RunBoxCmd("activate-wifi")
         }
         Sleep(5000) ; laisse le temps au wifi de changer de statut
 
+        ; Réactive les controles
         SwitchWifiButton.Enabled := true
         trayMenu.Enable("3&") ; Wifi
 
         RefreshWifiStatus(true)
-        BoxIsReachable(false)
+        BoxIsReachable(false) ; actualise l'icone si connecté en Wifi puis déconnecté
     }
 }
 
@@ -1197,7 +1227,7 @@ SendSMSGUISend(*) {
 ;  ######   #######  ##    ## ##          ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
 
 ConfigGUIOpen(*) {
-    global refuseUpdate 
+    global refuseUpdate
     refuseUpdate := false
     CheckForUpdate()
 
@@ -1234,7 +1264,8 @@ ConfigGUIClose(*) {
 }
 
 ConfigGUIValid(*) {
-    global ipRouter, username, password, loopDelay, autoWifiOffStart, autoWifiOffStatus, autoWifiOffEnd, autoWifiOnStatus
+    global ipRouter, username, password, loopDelay, autoWifiOffStart, autoWifiOffStatus, autoWifiOffEnd,
+        autoWifiOnStatus
 
     tmpIP := ipRouterEdit.Value
     tmpUsername := usernameEdit.Value
