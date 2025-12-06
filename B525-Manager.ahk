@@ -300,20 +300,17 @@ ConfigGUI.SetFont("w400", "Segoe UI")
 
 ConfigGUI.Add("Text", "xs+80 ys+20", "Adresse IP :")
 ipRouterEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", ipRouter)
-ipRouterHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
-SetButtonIcon(ipRouterHelp, "shell32.dll", helpIconID, 20)
+ipRouterHelp := ConfigGUI.Add("Picture", "Icon" . helpIconID . " x+5 yp+3 w16 h16 +0x0100", "shell32.dll")
 ConfigGUI.Tips.SetTip(ipRouterHelp, "par défaut : 192.168.8.1")
 
 ConfigGUI.Add("Text", "xs+83 y+15", "Utilisateur :")
 usernameEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", username)
-usernameHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
-SetButtonIcon(usernameHelp, "shell32.dll", helpIconID, 20)
+usernameHelp := ConfigGUI.Add("Picture", "Icon" . helpIconID . " x+5 yp+3 w16 h16 +0x0100", "shell32.dll")
 ConfigGUI.Tips.SetTip(usernameHelp, "par défaut : admin")
 
 ConfigGUI.Add("Text", "xs+65 y+15", "Mot de passe :")
 passwordEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", password)
-passwordHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
-SetButtonIcon(passwordHelp, "shell32.dll", helpIconID, 20)
+passwordHelp := ConfigGUI.Add("Picture", "Icon" . helpIconID . " x+5 yp+3 w16 h16 +0x0100", "shell32.dll")
 ConfigGUI.Tips.SetTip(passwordHelp, "par défaut : adminBox")
 
 ConfigGUI.SetFont("w700", "Segoe UI")
@@ -322,8 +319,7 @@ ConfigGUI.SetFont("w400", "Segoe UI")
 
 ConfigGUI.Add("Text", "xs+10 ys+20", "Actualisation :")
 delayEdit := ConfigGUI.Add("Edit", "w30 x+5 yp-3", loopDelay)
-delayHelp := ConfigGUI.Add("Button", "w16 h16 x+5 yp+3 +0x40 +0x0C", A_Space)
-SetButtonIcon(delayHelp, "shell32.dll", helpIconID, 20)
+delayHelp := ConfigGUI.Add("Picture", "Icon" . helpIconID . " x+5 yp+3 w16 h16 +0x0100", "shell32.dll")
 ConfigGUI.Tips.SetTip(delayHelp, "par défaut : 5m ▶ Période exprimée en s (secondes), m (minutes) ou h (heures)")
 
 autoWifiOffStatusCB := ConfigGUI.Add("CheckBox", "xs+10 y+15", "Désactivation du Wifi")
