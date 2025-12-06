@@ -1,3 +1,5 @@
+<img src="medias/noSMS.ico" width="200px"/>
+
 # B525-Manager
 Fonctionne sur Huawei B525s-65a (fonctionne peut-être sur d'autres modèles si API similaires).
 
