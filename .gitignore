@@ -1,8 +1,6 @@
 Archive/
 Docs/
+Lib/
 *.exe
 compiler.ahk
 updater.ahk
-JSON.ahk
-GuiCtrlTips.ahk
-GuiEditListView.ahk

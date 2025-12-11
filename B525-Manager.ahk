@@ -825,7 +825,7 @@ Refresh(*) {
     try {
         ; Récupération de tous les comptes de la boite et du statut du wifi
         SMSCountsXML := RunBoxCmd("get-count All")
-
+        
         wifiStatus := GetXMLValue(SMSCountsXML, "<wifiStatus>(\d+)</wifiStatus>")
         data.unreadSMSCount := GetXMLValue(SMSCountsXML, "<LocalUnread>(\d+)</LocalUnread>")
         data.inboxSMSCount := GetXMLValue(SMSCountsXML, "<LocalInbox>(\d+)</LocalInbox>")
@@ -1423,7 +1423,8 @@ AddAndSelectContact(LV_Contacts) {
 ; ##    ##  ##     ## ##   ###
 ; ##     ##  #######  ##    ##
 
-if A_IsCompiled && A_Args.Length() > 0 &&  A_Args[1] = "forceUpdate"
+if A_IsCompiled && A_Args.Length > 0 &&  A_Args[1] == "forceUpdate"
+    MsgBox("Une mise à jour forcée a été demandée...")
     CheckForUpdate()
 
 loop {
