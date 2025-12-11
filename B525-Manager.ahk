@@ -99,7 +99,7 @@ IL_Add(ImageListID, "imageres.dll", outboxIconID)
 IL_Add(ImageListID, "shell32.dll", unreadIconID)
 
 ; Ouverture du powershell permanent
-psShell := ComObject("WScript.Shell").Exec("powershell -ExecutionPolicy Bypass -command -")
+psShell := ComObject("WScript.Shell").Exec("powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -command -")
 
 ; Initialisation personnalisée, le cas échéant, des variables globales
 default_ipRouter := "192.168.8.1"
