@@ -20,7 +20,8 @@ SetWorkingDir(A_ScriptDir)
 psShell := "" ; Initialisation de la variable globale pour eviter erreur onExit()
 OnExit(ExitAppli)
 
-#Include "*i updater.ahk" ; gestion des mises à jour
+if A_IsCompiled
+    #Include "*i updater.ahk" ; gestion des mises à jour
 
 ; IMPORT / EXPORT des fichiers annexes pour version compilée
 DirCreate("medias")
@@ -907,7 +908,8 @@ Refresh(*) {
 ; ######## ####  ######     ##      ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
 
 ListSMSGUIOpen(*) {
-    CheckForUpdate()
+    if A_IsCompiled
+        CheckForUpdate()
     ListSMSGUI.Show()
 }
 
@@ -1225,7 +1227,8 @@ SendSMSGUISend(*) {
 ConfigGUIOpen(*) {
     global refuseUpdate
     refuseUpdate := false
-    CheckForUpdate()
+    if A_IsCompiled
+        CheckForUpdate()
 
     ipRouterEdit.Value := ipRouter
     usernameEdit.Value := username
@@ -1419,6 +1422,9 @@ AddAndSelectContact(LV_Contacts) {
 ; ##   ##   ##     ## ##  ####
 ; ##    ##  ##     ## ##   ###
 ; ##     ##  #######  ##    ##
+
+if A_IsCompiled && A_Args.Length() > 0 &&  A_Args[1] = "forceUpdate"
+    CheckForUpdate()
 
 loop {
     Refresh()
