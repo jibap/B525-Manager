@@ -908,8 +908,9 @@ Refresh(*) {
 ; ######## ####  ######     ##      ##        #######  ##    ##  ######     ##    ####  #######  ##    ##  ######
 
 ListSMSGUIOpen(*) {
-    if A_IsCompiled
+    if A_IsCompiled{
         CheckForUpdate()
+    }
     ListSMSGUI.Show()
 }
 
@@ -1227,8 +1228,9 @@ SendSMSGUISend(*) {
 ConfigGUIOpen(*) {
     global refuseUpdate
     refuseUpdate := false
-    if A_IsCompiled
+    if A_IsCompiled{
         CheckForUpdate()
+    }
 
     ipRouterEdit.Value := ipRouter
     usernameEdit.Value := username
@@ -1423,9 +1425,10 @@ AddAndSelectContact(LV_Contacts) {
 ; ##    ##  ##     ## ##   ###
 ; ##     ##  #######  ##    ##
 
-if A_IsCompiled && A_Args.Length > 0 &&  A_Args[1] == "forceUpdate"
+if A_IsCompiled && A_Args.Length > 0 &&  A_Args[1] == "forceUpdate" {
     MsgBox("Une mise à jour forcée a été demandée...")
     CheckForUpdate()
+}
 
 loop {
     Refresh()

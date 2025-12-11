@@ -129,19 +129,23 @@ function Logout() {
 }
 
 function GetCount($boxType) {
-    $wifiStatus = GetWifiStatus
-    $response = Invoke-WebRequest -Method GET -Uri "http://$script:ROUTER_IP/api/sms/sms-count"
-    [xml]$responseXML = $response.Content
-    if ($boxType -ne "All") {
-        $counts = $responseXML.response."Local$boxType"
-    } else {
-        $nodeWifi = $responseXML.CreateElement("wifiStatus")
-        $nodeWifi.InnerText = $wifiStatus
-        $parentNode = $responseXML.SelectSingleNode("//response")
-        $parentNode.AppendChild($nodeWifi)
-        $counts = $responseXML.OuterXml
+    try{
+        $wifiStatus = GetWifiStatus
+        $response = Invoke-WebRequest -UseBasicParsing -Method GET -Uri "http://$script:ROUTER_IP/api/sms/sms-count"
+        [xml]$responseXML = $response.Content
+        if ($boxType -ne "All") {
+            $counts = $responseXML.response."Local$boxType"
+        } else {
+            $nodeWifi = $responseXML.CreateElement("wifiStatus")
+            $nodeWifi.InnerText = $wifiStatus
+            $parentNode = $responseXML.SelectSingleNode("//response")
+            $parentNode.AppendChild($nodeWifi)
+            $counts = $responseXML.OuterXml
+        }
+        return $counts
+    }catch{
+        return "ERROR : GetCount $boxType : $($_.Exception.Message)"
     }
-    return $counts
 }
 
 function GetSMS($boxType) {
