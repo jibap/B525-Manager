@@ -1012,6 +1012,7 @@ ListSMSClick(LV_SMS, SelectedRowNumber) {
 
 Reply(*) {
     TagSMSAsRead(false)
+    InitSendSMSGUI()
     ; Si des contacts sont configurés, désactivation de la liste des contacts si réponse directe
     if (contactsArray.Length) {
         DDLContactChoice.Enabled := False
@@ -1110,30 +1111,34 @@ TagSMSAsRead(doRefresh := true) {
 
 SendSMSGUIShow(*) {
     if (BoxIsReachable(true)) {
-        RefreshContactsArray()
-        if (contactsArray.Length) {
-            itemsForDDL := [] ; array simple pour remplir la dropdownlist
-
-            for _, contactObj in contactsArray {
-                itemsForDDL.Push(contactObj.name)
-            }
-
-            DDLContactChoice.Delete()
-            DDLContactChoice.Add(itemsForDDL)
-
-            ; Init
-            DDLContactChoice.Enabled := True
-            DDLContactChoice.Value := 1
-            OnDDLContactChoiceChange()
-        } else {
-            DDLContactChoice.Enabled := False
-            DDLContactChoice.Value := 0
-            numberDest.Text := ""
-        }
-        numberDest.Enabled := True
+        InitSendSMSGUI()
         SendSMSGUI.Show()
         messageToDest.focus()
     }
+}
+
+InitSendSMSGUI() {
+    RefreshContactsArray()
+    if (contactsArray.Length) {
+        itemsForDDL := [] ; array simple pour remplir la dropdownlist
+
+        for _, contactObj in contactsArray {
+            itemsForDDL.Push(contactObj.name)
+        }
+
+        DDLContactChoice.Delete()
+        DDLContactChoice.Add(itemsForDDL)
+
+        ; Init
+        DDLContactChoice.Enabled := True
+        DDLContactChoice.Value := 1
+        OnDDLContactChoiceChange()
+    } else {
+        DDLContactChoice.Enabled := False
+        DDLContactChoice.Value := 0
+        numberDest.Text := ""
+    }
+    numberDest.Enabled := True
 }
 
 OnDestNumberEdit(*) {
@@ -1161,12 +1166,12 @@ FindContactByNumber(phoneNumber) {
 
 SetDDLContactChoiceByNumber(phoneNumber) {
     result := FindContactByNumber(phoneNumber)
-    DDLContactChoice.Value := result ? result.id : ""
+    DDLContactChoice.Value := IsObject(result) ? result.id : 0
 }
 
 GetContactNameByNumber(phoneNumber) {
     result := FindContactByNumber(phoneNumber)
-    return result ? Utf8ToText(result.contact.name) : phoneNumber
+    return IsObject(result) ? Utf8ToText(result.contact.name) : phoneNumber
 }
 
 SendSMSGUIClose(*) {
