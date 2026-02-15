@@ -156,17 +156,9 @@ deactivateWifi(){
    # \__|     \__|\__|  \__|\______|\__|  \__|
 
 
-
-
-# construct config file path
-CONFIG_FILE=$(dirname "$dir")/config.ini
-
-# Check if config.ini file exists
-if ! [ -f "$CONFIG_FILE" ]; then printf "\e[91mERROR : Fichier [config.ini] introuvable\e[0m \n" $0 ; exit 0 ; fi
-
-ROUTER_IP=$(awk -F '=' '/ROUTER_IP/ {print $2}' $CONFIG_FILE | tr -d '\r')
-ROUTER_USERNAME=$(awk -F "=" '/ROUTER_USERNAME/ {print $2}' $CONFIG_FILE | tr -d '\r')
-ROUTER_PASSWORD=$(awk -F "=" '/ROUTER_PASSWORD/ {print $2}' $CONFIG_FILE | tr -d '\r')
+ROUTER_IP=192.168.8.1
+ROUTER_USERNAME=admin
+ROUTER_PASSWORD=
 
 TMP_HEADER_FILE=/tmp/headers.tmp
 
