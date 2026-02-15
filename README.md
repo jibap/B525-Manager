@@ -4,7 +4,7 @@
 Fonctionne sur Huawei B525s-65a (fonctionne peut-être sur d'autres modèles si API similaires).
 
 **Pour Windows : Notification dès qu'un SMS arrive et UI gestionnaire de SMS (suppression, envoi...) + Interrupteur WIFI direct + auto-Off** \
-**Pour Linux** : voir [Bash Version branch](https://github.com/jibap/B525-Manager/tree/Bash-version)
+**Pour Linux** : voir [Bash Version](https://github.com/jibap/B525-Manager/tree/Bash-version)
 
 ## Projet
 J'ai cherché en vain une petite appli facile à mettre en oeuvre qui permettrait sous Windows d'être notifié dès qu'un SMS arrive sur la box 4G... \
