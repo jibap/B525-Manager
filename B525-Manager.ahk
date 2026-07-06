@@ -730,6 +730,7 @@ RunBoxCmd(command) {
             }
             errorText := errorText . "`n`nL'éxécution du programme est annulée."
             MsgBox(errorText, "ERREUR !", 48)
+            ConfigGUIOpenFile()
             ExitApp()
         }
     }
