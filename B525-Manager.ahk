@@ -1487,7 +1487,7 @@ AddAndSelectContact(LV_Contacts) {
 
 if A_IsCompiled && A_Args.Length > 0 &&  A_Args[1] == "/forceUpdate" {
     MsgBox("Une mise à jour forcée a été demandée...")
-    CheckForUpdate()
+    CheckForUpdate(true)
 }
 
 loop {
