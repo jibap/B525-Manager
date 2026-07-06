@@ -53,6 +53,7 @@ refreshing := false
 contactsArray := Array()
 ignoreDestEdit := false
 refuseUpdate := false
+PASSWORD_PLACEHOLDER := "••••••••"
 
 ; ICONES
 validIconID := "301"
@@ -117,6 +118,11 @@ default_password := "adminBox"
 password := IniRead("config.ini", "main", "ROUTER_PASSWORD", default_password)
 if (!password || Type(password) != "String") {
     password := default_password
+}
+; Migration auto : si le mot de passe stocké n'est pas déjà hashé, on le hash et on réécrit le fichier
+if (!IsHashedPassword(password)) {
+    password := B64Sha256(password)
+    IniWrite(password, "config.ini", "main", "ROUTER_PASSWORD")
 }
 
 ; Force les valeurs par défaut (y compris dans le config.ini) si invalide
@@ -310,7 +316,7 @@ usernameHelp := ConfigGUI.Add("Picture", "Icon" . helpIconID . " x+5 yp+3 w16 h1
 ConfigGUI.Tips.SetTip(usernameHelp, "par défaut : admin")
 
 ConfigGUI.Add("Text", "xs+65 y+15", "Mot de passe :")
-passwordEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3", password)
+passwordEdit := ConfigGUI.Add("Edit", "w80 x+5 yp-3 Password", PASSWORD_PLACEHOLDER)
 passwordHelp := ConfigGUI.Add("Picture", "Icon" . helpIconID . " x+5 yp+3 w16 h16 +0x0100", "shell32.dll")
 ConfigGUI.Tips.SetTip(passwordHelp, "par défaut : adminBox")
 
@@ -551,6 +557,46 @@ ValidIP(IPAddress) {
         return true
     }
     return false
+}
+
+IsHashedPassword(str) {
+    if (StrLen(str) != 88)
+        return false
+    if (SubStr(str, 87, 2) != "==")
+        return false
+    return RegExMatch(SubStr(str, 1, 86), "^[A-Za-z0-9+/]+$") ? true : false
+}
+
+B64Sha256(str) {
+    hProv := 0, hHash := 0
+    DllCall("advapi32\CryptAcquireContext", "Ptr*", &hProv, "Ptr", 0, "Ptr", 0
+        , "UInt", 24, "UInt", 0xF0000000)
+    DllCall("advapi32\CryptCreateHash", "Ptr", hProv, "UInt", 0x0000800c, "Ptr", 0, "UInt", 0, "Ptr*", &hHash)
+
+    buff := Buffer(StrPut(str, "UTF-8") - 1)
+    StrPut(str, buff, "UTF-8")
+    DllCall("advapi32\CryptHashData", "Ptr", hHash, "Ptr", buff, "UInt", buff.Size, "UInt", 0)
+
+    size := 32
+    hashBuf := Buffer(size)
+    DllCall("advapi32\CryptGetHashParam", "Ptr", hHash, "UInt", 2, "Ptr", hashBuf, "UInt*", &size, "UInt", 0)
+
+    DllCall("advapi32\CryptDestroyHash", "Ptr", hHash)
+    DllCall("advapi32\CryptReleaseContext", "Ptr", hProv, "UInt", 0)
+
+    hexStr := ""
+    loop 32
+        hexStr .= Format("{:02x}", NumGet(hashBuf, A_Index - 1, "UChar"))
+
+    hexBuf := Buffer(StrPut(hexStr, "UTF-8") - 1)
+    StrPut(hexStr, hexBuf, "UTF-8")
+
+    DllCall("crypt32\CryptBinaryToString", "Ptr", hexBuf, "UInt", hexBuf.Size, "UInt", 0x40000001, "Ptr", 0, "UInt*", &
+        outSize := 0)
+    outBuf := Buffer(outSize * 2)
+    DllCall("crypt32\CryptBinaryToString", "Ptr", hexBuf, "UInt", hexBuf.Size, "UInt", 0x40000001, "Ptr", outBuf,
+        "UInt*", &outSize)
+    return StrGet(outBuf, "UTF-16")
 }
 
 Utf8ToText(vUtf8) {
@@ -1239,7 +1285,7 @@ ConfigGUIOpen(*) {
 
     ipRouterEdit.Value := ipRouter
     usernameEdit.Value := username
-    passwordEdit.Value := password
+    passwordEdit.Value := PASSWORD_PLACEHOLDER
     delayEdit.Value := loopDelay
     autoWifiOffStartEdit.Value := TimeToDateTimeValue(autoWifiOffStart)
     autoWifiOffStatusCB.Value := autoWifiOffStatus
@@ -1294,6 +1340,14 @@ ConfigGUIValid(*) {
     if (!tmpPassword) {
         MsgBox("Mot de passe vide !", "Erreur", 48)
         return
+    }
+
+    ; Si le champ contient encore le placeholder, on garde le mot de passe (hash) actuel inchangé
+    if (tmpPassword = PASSWORD_PLACEHOLDER) {
+        tmpPassword := password  ; conserve le hash déjà stocké
+    } else if (!IsHashedPassword(tmpPassword)) {
+        ; l'utilisateur a saisi un nouveau mot de passe en clair -> on le hash
+        tmpPassword := B64Sha256(tmpPassword)
     }
 
     if (!RegExMatch(tmpDelay, "i)^\d+[smh]$")) {

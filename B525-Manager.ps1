@@ -109,13 +109,18 @@ function loggedin_check() {
 function Login() {
     GetSessionToken
 
-    # HASH PASSWORD
-    $password = b64_sha256($script:ROUTER_PASSWORD)
+    # HASH PASSWORD (uniquement si stocké en clair dans le config.ini)
+    $password = if ($script:ROUTER_PASSWORD -match '^[A-Za-z0-9+/]{86}==$') {
+        $script:ROUTER_PASSWORD
+    }
+    else {
+        b64_sha256($script:ROUTER_PASSWORD)
+    }
+
     $authstring = $script:ROUTER_USERNAME + $password + $script:TOKEN
-    
+
     # HASH WITH TOKEN
     $credentials = b64_sha256($authstring)
-
 
     $data = "<request><Username>$script:ROUTER_USERNAME</Username><Password>$credentials</Password><password_type>4</password_type></request>"
     $response = PostRouterData "/api/user/login" $data
