@@ -221,6 +221,129 @@ function writeOut($text){
     }
 }
 
+function CheckFirewallUrlFilterStatus() {
+    $response = GetRouterData '/api/security/firewall-switch'
+    [xml]$xml = $response
+    return [int]$xml.response.firewallurlfilterswitch
+}
+
+function AddUrlFilterDomains($domains) {
+    $current = GetRouterData '/api/security/url-filter'
+    [xml]$xml = $current
+
+    $existingFilters = @()
+    if ($xml.response.urlfilters.urlfilter) {
+        $existingFilters = @($xml.response.urlfilters.urlfilter)
+    }
+
+    $nextId = 1
+    if ($existingFilters.Count -gt 0) {
+        $nextId = ([int[]]($existingFilters | ForEach-Object { [int]$_.ID }) | Measure-Object -Maximum).Maximum + 1
+    }
+
+    $newEntries = @()
+    foreach ($domain in $domains) {
+        $domain = $domain.Trim()
+        if (-not $domain) { continue }
+
+        if ($existingFilters | Where-Object { $_.value -eq $domain }) {
+            writeOut "INFO: '$domain' est déjà présent, ignoré"
+            continue
+        }
+        if ($newEntries | Where-Object { $_ -eq $domain }) {
+            writeOut "INFO: '$domain' en doublon dans les paramètres, ignoré"
+            continue
+        }
+
+        $newEntries += $domain
+    }
+
+    if ($newEntries.Count -eq 0) {
+        writeOut "INFO: Aucun nouveau domaine à ajouter"
+        return
+    }
+
+    $entriesXml = ""
+    foreach ($f in $existingFilters) {
+        $entriesXml += "<urlfilter><status>$($f.status)</status><ID>$($f.ID)</ID><value>$($f.value)</value></urlfilter>"
+    }
+    foreach ($domain in $newEntries) {
+        $entriesXml += "<urlfilter><status>1</status><ID>$nextId</ID><value>$domain</value></urlfilter>"
+        $nextId++
+    }
+
+    $data = "<request><urlfilters>$entriesXml</urlfilters></request>"
+    $result = PostRouterData "/api/security/url-filter" $data $true
+
+    # Avertissement si le filtrage n'est pas actif au niveau firewall
+    if ((CheckFirewallUrlFilterStatus) -ne 1) {
+        writeOut "ATTENTION : $($newEntries.Count) domaine(s) ajouté(s) mais le filtrage d'URL est DÉSACTIVÉ au niveau du firewall. Il faut l'activer via 'Avancé/SECURITE/Commutateur pare-feu'"
+    }
+
+    return $result
+}
+
+function RemoveUrlFilterDomains($domains) {
+    $current = GetRouterData '/api/security/url-filter'
+    [xml]$xml = $current
+
+    $existingFilters = @()
+    if ($xml.response.urlfilters.urlfilter) {
+        $existingFilters = @($xml.response.urlfilters.urlfilter)
+    }
+
+    if ($domains -contains "*") {
+        $removedCount = $existingFilters.Count
+        $existingFilters = @()
+        writeOut "INFO: Suppression de toutes les entrées ($removedCount domaine(s))"
+    }
+    else {
+        $before = $existingFilters.Count
+        $existingFilters = $existingFilters | Where-Object { $domains -notcontains $_.value }
+        $removedCount = $before - $existingFilters.Count
+        writeOut "INFO: $removedCount domaine(s) supprimé(s)"
+    }
+
+    $entriesXml = ""
+    foreach ($f in $existingFilters) {
+        $entriesXml += "<urlfilter><status>$($f.status)</status><ID>$($f.ID)</ID><value>$($f.value)</value></urlfilter>"
+    }
+
+    $data = "<request><urlfilters>$entriesXml</urlfilters></request>"
+    return PostRouterData "/api/security/url-filter" $data $true
+}
+
+function SetDns($dnsIps) {
+    $current = GetRouterData '/api/dhcp/settings'
+    [xml]$xml = $current
+
+    $dhcpStartIp = $xml.response.DhcpStartIPAddress
+    $dhcpIp = $xml.response.DhcpIPAddress
+    $accessIp = $xml.response.accessipaddress
+    $homeUrl = $xml.response.homeurl
+    $dhcpStatus = $xml.response.DhcpStatus
+    $dhcpNetmask = $xml.response.DhcpLanNetmask
+    $dhcpEndIp = $xml.response.DhcpEndIPAddress
+    $dhcpLeaseTime = $xml.response.DhcpLeaseTime
+
+    if (-not $dnsIps -or $dnsIps.Count -eq 0) {
+        $dnsStatus = 1
+        $primaryDns = $dhcpIp
+        $secondaryDns = $dhcpIp
+        writeOut "INFO: DNS remis en mode automatique"
+    }
+    else {
+        $dnsStatus = 0
+        $primaryDns = $dnsIps[0]
+        $secondaryDns = if ($dnsIps.Count -gt 1) { $dnsIps[1] } else { "" }
+        writeOut "INFO: DNS manuel défini sur $primaryDns$(if ($secondaryDns) { ", $secondaryDns" })"
+    }
+
+    $data = "<request><DnsStatus>$dnsStatus</DnsStatus><DhcpStartIPAddress>$dhcpStartIp</DhcpStartIPAddress><DhcpIPAddress>$dhcpIp</DhcpIPAddress><accessipaddress>$accessIp</accessipaddress><homeurl>$homeUrl</homeurl><DhcpStatus>$dhcpStatus</DhcpStatus><DhcpLanNetmask>$dhcpNetmask</DhcpLanNetmask><SecondaryDns>$secondaryDns</SecondaryDns><PrimaryDns>$primaryDns</PrimaryDns><DhcpEndIPAddress>$dhcpEndIp</DhcpEndIPAddress><DhcpLeaseTime>$dhcpLeaseTime</DhcpLeaseTime></request>"
+
+    return PostRouterData "/api/dhcp/settings" $data $true
+}
+
 ############################
 #### BEDUT DU PROGRAMME ####
 ############################
@@ -251,9 +374,9 @@ if(-not(Test-NetConnection $script:ROUTER_IP -InformationLevel Quiet)){
 # GESTION DES ARGUMENTS
 
 $syntax = "
-Usage: manage_sms.ps1 <command> 
+Usage: B525-Manager.ps1 <command> [paramètres]
 
-Commands:
+Commands SMS:
     get-count [Unread,Inbox,Outbox,All]
     get-sms [1=reçus (par défaut), 2=envoyés]
     read-all
@@ -261,11 +384,23 @@ Commands:
     delete-sms-type [1=reçus (par défaut), 2=envoyés]
     delete-sms <Index>
     delete-all
+    send-sms <Message|sms.txt> <Numero>
+
+Commands WiFi:
     get-wifi
     activate-wifi
     deactivate-wifi
-    send-sms <Message|sms.txt> <Numero>"
 
+Commands Filtrage de domaines:
+    get-url-filter
+    get-white-url-filter
+    enable-url-filter
+    add-url-filter <domaine1[,domaine2,...]>
+    remove-url-filter <domaine1[,domaine2,...]|*>
+
+Commands DNS:
+    set-dns [DNS1[,DNS2]]   (sans argument = repasse en DNS automatique)
+"
 if ($args.Count -lt 1) {
     writeOut "ERROR: At least 1 parameter required"
     writeOut $syntax
@@ -329,6 +464,35 @@ if ($args[0] -eq "send-sms") {
     }
 }
 
+if ($args[0] -eq "add-url-filter" -or $args[0] -eq "remove-url-filter") {
+    if (-not $args[1]) {
+        writeOut "ERROR: Second parameter required <domaine1[,domaine2,...]>"
+        exit
+    }
+    else {
+        # Récupère tous les arguments restants, les rejoint puis les éclate sur la virgule
+        # Permet : add-url-filter domain1.com domain2.fr
+        # Et      : add-url-filter "domain1.com,domain2.fr"
+        $rawInput = ($args[1..($args.Count - 1)]) -join ","
+        $DOMAINS = $rawInput -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    }
+}
+
+if ($args[0] -eq "set-dns") {
+    if ($args.Count -gt 1) {
+        # Récupère tous les arguments restants, les rejoint puis les éclate sur la virgule
+        # Permet : set-dns 1.1.1.1 8.8.8.8
+        # Et      : set-dns "1.1.1.1,8.8.8.8"
+        $rawInput = ($args[1..($args.Count - 1)]) -join ","
+        $DNS_IPS = $rawInput -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+    }
+    else {
+        # Aucun argument -> reset en DNS automatique
+        $DNS_IPS = @()
+    }
+}
+
+
 
 # Création de la session
 $script:SESSION = New-Object System.Net.WebClient
@@ -349,9 +513,12 @@ switch ($args[0]) {
     "get-wifi" { $status = GetWifiStatus; $status }
     "activate-wifi" {  ChangeWifiStatus "1" }
     "deactivate-wifi" { ChangeWifiStatus "0" }
+    "add-url-filter" { AddUrlFilterDomains $DOMAINS }
+    "remove-url-filter" { RemoveUrlFilterDomains $DOMAINS }
+    "set-dns" { setDNS $DNS_IPS }
     default {
-        writeOut "ERROR: Command '$($args[0])' unavailable"
-        writeOut $syntax
+        writeOut "UNKNOWN ERROR WITH API REQUEST : code=$($responseXML.error.code) message=$($responseXML.error.message)"
+        writeOut "$relativeUrl : $data"
     }
 }
 
